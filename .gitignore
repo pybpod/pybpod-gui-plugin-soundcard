@@ -1,0 +1,16 @@
+
+pybpod_soundcard_module/__pycache__/
+
+*.pyc
+
+docs/build/html/
+
+docs/build/
+
+pybpod_soundcard_module\.egg-info/
+
+build/
+
+dist/
+
+pybpod_gui_plugin_soundcard\.egg-info/
