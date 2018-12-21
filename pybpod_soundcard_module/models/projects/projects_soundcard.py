@@ -2,6 +2,7 @@ from AnyQt.QtGui import QIcon
 from confapp import conf
 from pybpod_soundcard_module.module_gui import SoundCardModuleGUI
 
+
 class ProjectsSoundCard(object):
 
     def register_on_main_menu(self, mainmenu):
@@ -12,7 +13,9 @@ class ProjectsSoundCard(object):
 
         menu_index = 0
         for i, m in enumerate(mainmenu):
-            if 'Tools' in m.keys(): menu_index = i; break
+            if 'Tools' in m.keys():
+                menu_index = i
+                break
 
         mainmenu[menu_index]['Tools'].append('-')
         mainmenu[menu_index]['Tools'].append(
