@@ -13,47 +13,47 @@ import usb.util
 
 
 class SampleRate(IntEnum):
-    _96000Hz = 96000,
-    _192000Hz = 192000
+    _96000HZ = 96000,
+    _192000HZ = 192000
 
 
 class DataType(IntEnum):
-    Int32 = 0,
-    Float32 = 1
+    INT32 = 0,
+    FLOAT32 = 1
 
 
 class SoundCommandType(IntEnum):
-    Play = 1,
-    StopSpecific = 2,
-    StopAll = 3
+    PLAY = 1,
+    STOP_SPECIFIC = 2,
+    STOP_ALL = 3
 
 
 class SoundCardErrorCode(Enum):
-    Ok = 0,
-    BadUserInput = -1,
+    OK = 0,
+    BAD_USER_INPUT = -1,
 
-    HarpSoundCardNotDetected = -1000,
-    NotAbleToSendMetadata = auto(),
-    NotAbleToReadMetadataCommandReply = auto(),
-    MetadataCommandReplyNotCorrect = auto(),
-    NotAbleToSendData = auto(),
-    NotAbleToReadDataCommandReply = auto(),
-    DataCommandReplyNotCorrect = auto(),
-    NotAbleToSendReadMetadata = auto(),
-    NotAbleToReadReadMetadataCommandReply = auto(),
-    ReadMetadataCommandReplyNotCorrect = auto(),
+    HARP_SOUND_CARD_NOT_DETECTED = -1000,
+    NOT_ABLE_TO_SEND_METADATA = auto(),
+    NOT_ABLE_TO_READ_METADATA_COMMAND_REPLY = auto(),
+    METADATA_COMMAND_REPLY_NOT_CORRECT = auto(),
+    NOT_ABLE_TO_SEND_DATA = auto(),
+    NOT_ABLE_TO_READ_DATA_COMMAND_REPLY = auto(),
+    DATA_COMMAND_REPLY_NOT_CORRECT = auto(),
+    NOT_ABLE_TO_SEND_READ_METADATA = auto(),
+    NOT_ABLE_TO_READ_READ_METADATA_COMMAND_REPLY = auto(),
+    READ_METADATA_COMMAND_REPLY_NOT_CORRECT = auto(),
 
-    BadSoundIndex = -1020,
-    BadSoundLength = auto(),
-    BadSampleRate = auto(),
-    BadDataType = auto(),
-    DataTypeDoNotMatch = auto(),
-    BadDataIndex = auto(),
+    BAD_SOUND_INDEX = -1020,
+    BAD_SOUND_LENGTH = auto(),
+    BAD_SAMPLE_RATE = auto(),
+    BAD_DATA_TYPE = auto(),
+    DATA_TYPE_DO_NOT_MATCH = auto(),
+    BAD_DATA_INDEX = auto(),
 
-    ProducingSound = -1030,
-    StartedProducingSound = auto(),
+    PRODUCING_SOUND = -1030,
+    STARTED_PRODUCING_SOUND = auto(),
 
-    NotAbleToOpenFile = -1040
+    NOT_ABLE_TO_OPEN_FILE = -1040
 
 
 class SoundMetadata(object):
@@ -74,27 +74,27 @@ class SoundMetadata(object):
 
     def check_data(self):
         if self._sound_index < 2 or self._sound_index > 32:
-            return SoundCardErrorCode.BadSoundIndex
+            return SoundCardErrorCode.BAD_SOUND_INDEX
 
         if self._sound_length < 16:
-            return SoundCardErrorCode.BadSoundLength
+            return SoundCardErrorCode.BAD_SOUND_LENGTH
 
-        if self._sample_rate is not SampleRate._96000Hz and self._sample_rate is not SampleRate._192000Hz:
-            return SoundCardErrorCode.BadSampleRate
+        if self._sample_rate is not SampleRate._96000HZ and self._sample_rate is not SampleRate._192000HZ:
+            return SoundCardErrorCode.BAD_SAMPLE_RATE
 
-        if self._data_type is not DataType.Int32 and self._data_type is not DataType.Float32:
-            return SoundCardErrorCode.BadDataType
+        if self._data_type is not DataType.INT32 and self._data_type is not DataType.FLOAT32:
+            return SoundCardErrorCode.BAD_DATA_TYPE
 
-        if self._sound_index == 0 and self._data_type is not DataType.Float32:
-            return SoundCardErrorCode.DataTypeDoNotMatch
+        if self._sound_index == 0 and self._data_type is not DataType.FLOAT32:
+            return SoundCardErrorCode.DATA_TYPE_DO_NOT_MATCH
 
-        if self._sound_index == 1 and self._data_type is not DataType.Float32:
-            return SoundCardErrorCode.DataTypeDoNotMatch
+        if self._sound_index == 1 and self._data_type is not DataType.FLOAT32:
+            return SoundCardErrorCode.DATA_TYPE_DO_NOT_MATCH
 
-        if self._sound_index > 1 and self._data_type is not DataType.Int32:
-            return SoundCardErrorCode.DataTypeDoNotMatch
+        if self._sound_index > 1 and self._data_type is not DataType.INT32:
+            return SoundCardErrorCode.DATA_TYPE_DO_NOT_MATCH
 
-        return SoundCardErrorCode.Ok
+        return SoundCardErrorCode.OK
 
     def to_byte_array(self):
         return bytes(self)
@@ -119,6 +119,7 @@ class SoundCardModule(object):
         self._cfg = None
         self._port = None
         self._com_port = serial_port
+        self._connected = False
 
         if serial_port:
             self.open(serial_port)
@@ -155,11 +156,16 @@ class SoundCardModule(object):
                 print(
                     "No COM ports detected. You will not be able to send play and stop commands to the sound card using a COM port.")
 
+        self._connected = True
+
     @property
     def devices(self):
         self._devices = list(usb.core.find(idVendor=0x04d8, idProduct=0xee6a, find_all=True))
         return self._devices
 
+    @property
+    def connected(self):
+        return self._connected
 
     def close(self):
         """
@@ -197,16 +203,16 @@ class SoundCardModule(object):
         if not command_type:
             raise Exception("You need to provide the type of the command you want returned")
 
-        if command_type is SoundCommandType.Play or command_type is SoundCommandType.StopSpecific:
+        if command_type is SoundCommandType.PLAY or command_type is SoundCommandType.STOP_SPECIFIC:
             if not sound_index:
                 raise Exception("You need to provide with the sound_index value to play")
 
             if sound_index < 2 or sound_index > 31:
                 raise Exception("sound_index must have a value between 2 and 31")
 
-        if command_type is SoundCommandType.Play:
+        if command_type is SoundCommandType.PLAY:
             return [ord('P'), sound_index]
-        if command_type is SoundCommandType.StopSpecific:
+        if command_type is SoundCommandType.STOP_SPECIFIC:
             return [ord('x'), sound_index]
 
         # by default return stop
@@ -354,7 +360,7 @@ class SoundCardModule(object):
 
         # create metadata info and add it to the metadata_cmd
         metadata = SoundMetadata(sound_index, sound_file_size_in_samples, sample_rate, data_type)
-        if metadata.check_data() is not SoundCardErrorCode.Ok:
+        if metadata.check_data() is not SoundCardErrorCode.OK:
             print("Input data incorrect, please correct it before proceeding.")
             return
 
