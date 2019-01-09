@@ -4,6 +4,8 @@ numpy
 sip
 pyqt5
 matplotlib
+libusb
+pyusb
 
 # swp dependencies
 git+https://github.com/UmSenhorQualquer/pyforms.git

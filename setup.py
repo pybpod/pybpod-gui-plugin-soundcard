@@ -3,6 +3,10 @@
 
 from setuptools import setup, find_packages
 
+requirements = [
+	'libusb',
+	'pyusb'
+]
 
 setup(
 	name='pybpod-gui-plugin-soundcard',
@@ -16,5 +20,6 @@ setup(
 	include_package_data=True,
 	packages=find_packages(),
 
-	package_data={'pybpod_soundcard_module': ['resources/*.*',]}
+	package_data={'pybpod_soundcard_module': ['resources/*.*',]},
+	install_requires=requirements,
 )
