@@ -3,13 +3,31 @@ from AnyQt.QtWidgets import QFileDialog
 from confapp import conf
 from pybpodgui_api.utils.generate_sound import generate_sound
 from pyforms_gui.basewidget import BaseWidget
+from pyforms_gui.controls.control_base import ControlBase
 from pyforms_gui.controls.control_button import ControlButton
 from pyforms_gui.controls.control_combo import ControlCombo
+from pyforms_gui.controls.control_emptywidget import ControlEmptyWidget
 from pyforms_gui.controls.control_label import ControlLabel
 from pyforms_gui.controls.control_number import ControlNumber
 from pyforms_gui.controls.control_text import ControlText
 
 from .module_api import SoundCardModule, SampleRate
+
+
+class SoundGenerationPanel(ControlEmptyWidget):
+
+    def __init__(self):
+        super(SoundGenerationPanel, self).__init__()
+
+        self._firstname = ControlText('First name', 'Default value')
+        self._middlename = ControlText('Middle name')
+        self._lastname = ControlText('Lastname name')
+        self._fullname = ControlText('Full name')
+        self._button = ControlButton('Press this button')
+
+        # Define the organization of the forms
+        # self.formset = ['_firstname', '_middlename', '_lastname', '_fullname', '_button', ' ']
+        self.value = [self._firstname, self._middlename, self._lastname, self._fullname, self._button]
 
 
 class SoundCardModuleGUI(SoundCardModule, BaseWidget):
@@ -20,6 +38,8 @@ class SoundCardModuleGUI(SoundCardModule, BaseWidget):
         BaseWidget.__init__(self, self.TITLE, parent_win=parent_win)
         SoundCardModule.__init__(self)
 
+        self._sound_generation = SoundGenerationPanel()
+
         self._sound_card = SoundCardModule()
         self._wave_int = []
 
@@ -29,10 +49,10 @@ class SoundCardModuleGUI(SoundCardModule, BaseWidget):
                                               default=self.__refresh_usb_ports_btn_pressed,
                                               helptext="Press here to refresh the list of available devices.")
         self._connect_btn = ControlButton('Connect', default=self.__connect_btn_pressed)
-        self._filename = ControlText('Stream Filename', '')
+        self._filename = ControlText('Sound filename', '')
         self._saveas_btn = ControlButton('Save As...', default=self.__prompt_save_file_evt)
 
-        self._freq_label = ControlLabel('Frequency', style='font-weight:bold;text-align:left')
+        self._freq_label = ControlLabel('Frequency', style='font-weight:bold;margin-left:0')
         self._freq_left = ControlNumber('Left Channel', default=10000, minimum=0, maximum=2000000)
         self._freq_right = ControlNumber('Right Channel', default=10000, minimum=0, maximum=2000000)
         self._duration = ControlNumber('Duration (s)', default=1, minimum=0, maximum=100000, decimals=2)
@@ -45,13 +65,13 @@ class SoundCardModuleGUI(SoundCardModule, BaseWidget):
         self._gen_btn.enabled = False
 
         self.formset = [
+            'h5: Sound generation',
             ('_serial_port', '_refresh_serials', '_connect_btn'),
             ('_filename', '_saveas_btn'),
-            ('_freq_label', ('_freq_left', '_freq_right')),
+            ('h5:Frequency', '_freq_left', '_freq_right'),
             '_duration',
             '_fs',
-            '_gen_btn'
-        ]
+            '_gen_btn']
 
         self.set_margin(10)
 
