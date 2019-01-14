@@ -1,9 +1,8 @@
 from AnyQt import QtGui
-from AnyQt.QtWidgets import QFileDialog
+from AnyQt.QtWidgets import QFileDialog, QSizePolicy
 from confapp import conf
 from pybpodgui_api.utils.generate_sound import generate_sound
 from pyforms_gui.basewidget import BaseWidget
-from pyforms_gui.controls.control_base import ControlBase
 from pyforms_gui.controls.control_button import ControlButton
 from pyforms_gui.controls.control_combo import ControlCombo
 from pyforms_gui.controls.control_emptywidget import ControlEmptyWidget
@@ -14,34 +13,10 @@ from pyforms_gui.controls.control_text import ControlText
 from .module_api import SoundCardModule, SampleRate
 
 
-class SoundGenerationPanel(ControlEmptyWidget):
+class SoundGenerationPanel(BaseWidget):
 
-    def __init__(self):
-        super(SoundGenerationPanel, self).__init__()
-
-        self._firstname = ControlText('First name', 'Default value')
-        self._middlename = ControlText('Middle name')
-        self._lastname = ControlText('Lastname name')
-        self._fullname = ControlText('Full name')
-        self._button = ControlButton('Press this button')
-
-        # Define the organization of the forms
-        # self.formset = ['_firstname', '_middlename', '_lastname', '_fullname', '_button', ' ']
-        self.value = [self._firstname, self._middlename, self._lastname, self._fullname, self._button]
-
-
-class SoundCardModuleGUI(SoundCardModule, BaseWidget):
-
-    TITLE = 'Sound Card module'
-
-    def __init__(self, parent_win=None):
-        BaseWidget.__init__(self, self.TITLE, parent_win=parent_win)
-        SoundCardModule.__init__(self)
-
-        self._sound_generation = SoundGenerationPanel()
-
-        self._sound_card = SoundCardModule()
-        self._wave_int = []
+    def __init__(self, parent_win=None, win_flag=None):
+        BaseWidget.__init__(self, 'Sound Generation panel', parent_win=parent_win, win_flag=win_flag)
 
         self._serial_port = ControlCombo('Serial port', changed_event=self.__combo_usb_ports_changed_evt)
         self._refresh_serials = ControlButton('',
@@ -64,6 +39,10 @@ class SoundCardModuleGUI(SoundCardModule, BaseWidget):
         self._gen_btn = ControlButton('Generate sound', default=self.__generate_sound_and_save)
         self._gen_btn.enabled = False
 
+        self._sound_card = SoundCardModule()
+        self._wave_int = []
+
+        # Define the organization of the forms
         self.formset = [
             'h5: Sound generation',
             ('_serial_port', '_refresh_serials', '_connect_btn'),
@@ -71,11 +50,12 @@ class SoundCardModuleGUI(SoundCardModule, BaseWidget):
             ('h5:Frequency', '_freq_left', '_freq_right'),
             '_duration',
             '_fs',
-            '_gen_btn']
-
-        self.set_margin(10)
-
+            '_gen_btn'
+        ]
+        # self.value = [self._firstname, self._middlename, self._lastname, self._fullname, self._button]
         self._fill_usb_ports()
+
+        self.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
 
     def _fill_usb_ports(self):
         self._serial_port.add_item('', '')
@@ -127,7 +107,8 @@ class SoundCardModuleGUI(SoundCardModule, BaseWidget):
             return
 
         self._wave_int = generate_sound(self._filename.value,
-                                        self._fs.value.value,  # fs.value has a Enum so we need to get the value from it
+                                        self._fs.value.value,
+                                        # fs.value has a Enum so we need to get the value from it
                                         self._duration.value,
                                         int(self._freq_left.value),
                                         int(self._freq_right.value),
@@ -135,3 +116,23 @@ class SoundCardModuleGUI(SoundCardModule, BaseWidget):
 
         self.success("Sound file written successfully to '{filename}'".format(filename=self._filename),
                      "File written successfully")
+
+
+class SoundCardModuleGUI(SoundCardModule, BaseWidget):
+
+    TITLE = 'Sound Card module'
+
+    def __init__(self, parent_win=None):
+        BaseWidget.__init__(self, self.TITLE, parent_win=parent_win)
+        SoundCardModule.__init__(self)
+
+        self._sound_generation = SoundGenerationPanel(parent_win=self)
+
+        self._panel = ControlEmptyWidget()
+        self._panel.value = self._sound_generation
+
+        self.formset = [
+            '_panel',
+        ]
+
+        self.set_margin(10)
