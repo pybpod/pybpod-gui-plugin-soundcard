@@ -1,3 +1,6 @@
+from pyforms_gui.controls.control_checkbox import ControlCheckBox
+from scipy.io import wavfile
+import numpy as np
 from AnyQt import QtGui
 from AnyQt.QtWidgets import QFileDialog, QSizePolicy
 from confapp import conf
@@ -18,73 +21,54 @@ class SoundGenerationPanel(BaseWidget):
     def __init__(self, parent_win=None, win_flag=None):
         BaseWidget.__init__(self, 'Sound Generation panel', parent_win=parent_win, win_flag=win_flag)
 
-        self._serial_port = ControlCombo('Serial port', changed_event=self.__combo_usb_ports_changed_evt)
-        self._refresh_serials = ControlButton('',
-                                              icon=QtGui.QIcon(conf.REFRESH_SMALL_ICON),
-                                              default=self.__refresh_usb_ports_btn_pressed,
-                                              helptext="Press here to refresh the list of available devices.")
-        self._connect_btn = ControlButton('Connect', default=self.__connect_btn_pressed)
-        self._filename = ControlText('Sound filename', '')
-        self._saveas_btn = ControlButton('Save As...', default=self.__prompt_save_file_evt)
+        self._generated = False
 
-        self._freq_label = ControlLabel('Frequency', style='font-weight:bold;margin-left:0')
-        self._freq_left = ControlNumber('Left Channel', default=10000, minimum=0, maximum=2000000)
-        self._freq_right = ControlNumber('Right Channel', default=10000, minimum=0, maximum=2000000)
-        self._duration = ControlNumber('Duration (s)', default=1, minimum=0, maximum=100000, decimals=2)
+        self._save_file_checkbox = ControlCheckBox('Write file to disk',
+                                                   default=False,
+                                                   changed_event=self.__save_file_checkbox_evt)
 
-        self._fs = ControlCombo('Sample frequency')
-        self._fs.add_item('96 KHz', SampleRate._96000HZ)
-        self._fs.add_item('192 KHz', SampleRate._192000HZ)
+        self._filename = ControlText('Sound filename', '', enabled=False, changed_event=self.__filename_changed_evt)
+        self._saveas_btn = ControlButton('Save As...', default=self.__prompt_save_file_evt, enabled=False)
 
-        self._gen_btn = ControlButton('Generate sound', default=self.__generate_sound_and_save)
-        self._gen_btn.enabled = False
+        self._freq_label = ControlLabel('Frequency (Hz)', style='font-weight:bold;margin-left:0')
+        self._freq_left = ControlNumber('Left channel', default=1000, minimum=0, maximum=20000)
+        self._freq_right = ControlNumber('Right channel', default=1000, minimum=0, maximum=20000)
+        self._duration = ControlNumber('Duration (s)', default=1, minimum=0, maximum=10000, decimals=2)
 
-        self._sound_card = SoundCardModule()
+        self._sample_rate = ControlCombo('Sample rate')
+        self._sample_rate.add_item('96 KHz', SampleRate._96000HZ)
+        self._sample_rate.add_item('192 KHz', SampleRate._192000HZ)
+
+        self._gen_btn = ControlButton('Generate sound',
+                                      default=self.__generate_sound_and_save)
+
         self._wave_int = []
 
         # Define the organization of the forms
         self.formset = [
-            'h5: Sound generation',
-            ('_serial_port', '_refresh_serials', '_connect_btn'),
+            'h5:Sound generation',
+            '_save_file_checkbox',
             ('_filename', '_saveas_btn'),
-            ('h5:Frequency', '_freq_left', '_freq_right'),
-            '_duration',
-            '_fs',
+            ('_duration', ' ', '_sample_rate'),
+            ('h5:Frequency', ' ', '_freq_left', '_freq_right'),
             '_gen_btn'
         ]
-        # self.value = [self._firstname, self._middlename, self._lastname, self._fullname, self._button]
-        self._fill_usb_ports()
 
-        self.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
+        self.set_margin(10)
 
-    def _fill_usb_ports(self):
-        self._serial_port.add_item('', '')
-        if self._sound_card:
-            usb_devices = self._sound_card.devices
-            for n, item in enumerate(usb_devices):
-                item_str = item.product + ' {n} (port={port})'.format(n=n, port=item.port_number)
-                self._serial_port.add_item(item_str, item)
+    @property
+    def wave_int(self):
+        return self._wave_int
 
-    def __combo_usb_ports_changed_evt(self):
-        # TODO: self._sound_card.close()
-        self._connect_btn.enabled = True
+    @property
+    def generated(self):
+        return self._generated
 
-    def __refresh_usb_ports_btn_pressed(self):
-        tmp = self._serial_port.value
-        self._serial_port.clear()
-        self._fill_usb_ports()
-        self._serial_port.value = tmp
-
-    def __connect_btn_pressed(self):
-
-        if not self._serial_port.value:
-            self.warning("Please select a serial port before proceeding.", "No serial port selected")
-            return
-
-        self._sound_card.open(device=self._serial_port.value)
-
-        # update some visual elements?
-        self._connect_btn.enabled = False
+    def __filename_changed_evt(self):
+        if not self._filename.value:
+            self._gen_btn.enabled = False
+        else:
+            self._gen_btn.enabled = True
 
     def __prompt_save_file_evt(self):
         """
@@ -96,43 +80,154 @@ class SoundGenerationPanel(BaseWidget):
         else:
             self._gen_btn.enabled = False
 
-    def __generate_sound_and_save(self):
-        if not self._sound_card.connected:
-            self.warning("Please connect to the sound card before proceeding",
-                         "No connection to the sound card established.")
-            return
+    def __save_file_checkbox_evt(self):
+        self._filename.enabled = self._saveas_btn.enabled = self._save_file_checkbox.value
+        if self._filename.value:
+            self._gen_btn.enabled = True
+        else:
+            self._gen_btn.enabled = not self._save_file_checkbox.value
 
-        if not self._filename.value:
+    def __generate_sound_and_save(self):
+        if self._save_file_checkbox.value and not self._filename.value:
             self.warning("Please select a destination file for the generated sound", "No sound file selected")
             return
 
         self._wave_int = generate_sound(self._filename.value,
-                                        self._fs.value.value,
+                                        self._sample_rate.value.value,
                                         # fs.value has a Enum so we need to get the value from it
                                         self._duration.value,
                                         int(self._freq_left.value),
-                                        int(self._freq_right.value),
-                                        True)
+                                        int(self._freq_right.value))
 
-        self.success("Sound file written successfully to '{filename}'".format(filename=self._filename),
-                     "File written successfully")
+        if self._filename.value:
+            self.success("Sound file written successfully to '{filename}'".format(filename=self._filename),
+                         "File written successfully")
+        else:
+            self.success("Sound generated successfully. It can now be sent to the Sound Card",
+                         "Sound generated successfully")
+
+        self._generated = True
+
+
+class LoadSoundPanel(BaseWidget):
+
+    def __init__(self, parent_win=None, win_flag=None):
+        BaseWidget.__init__(self, 'Load sound panel', parent_win=parent_win, win_flag=win_flag)
+
+        self._loaded = False
+
+        self._filename = ControlText('Load WAV file', '')
+        self._read_btn = ControlButton('Browse', default=self.__prompt_read_file_evt)
+
+        self._wave_int = []
+
+        self.formset = [
+            'h5:Load sound from disk',
+            ('_filename', '_read_btn')
+        ]
+
+        self.set_margin(10)
+
+    def __prompt_read_file_evt(self):
+        """
+        Opens a window for user to select where to save the sound .bin file
+        """
+        self._filename.value, _ = QFileDialog.getOpenFileName(caption='Choose WAV file', filter='WAV(*.wav)')
+        if self._filename.value:
+            # read wave file as numpy int32
+            fs, data = wavfile.read(self._filename.value)
+            self._wave_int = np.array(data, dtype=np.int32)
+            self._loaded = True
+
+    @property
+    def wave_int(self):
+        return self._wave_int
+
+    @property
+    def loaded(self):
+        return self._loaded
 
 
 class SoundCardModuleGUI(SoundCardModule, BaseWidget):
-
     TITLE = 'Sound Card module'
 
     def __init__(self, parent_win=None):
         BaseWidget.__init__(self, self.TITLE, parent_win=parent_win)
         SoundCardModule.__init__(self)
 
+        self._usb_port = ControlCombo('USB port', changed_event=self.__combo_usb_ports_changed_evt)
+        self._refresh_usb_ports = ControlButton('',
+                                                icon=QtGui.QIcon(conf.REFRESH_SMALL_ICON),
+                                                default=self.__refresh_usb_ports_btn_pressed,
+                                                helptext="Press here to refresh the list of available devices.")
+        self._connect_btn = ControlButton('Connect', default=self.__connect_btn_pressed)
+        self._send_btn = ControlButton('Send to sound card', default=self.__send_btn_pressed)
+
         self._sound_generation = SoundGenerationPanel(parent_win=self)
 
-        self._panel = ControlEmptyWidget()
-        self._panel.value = self._sound_generation
+        self._sound_gen_panel = ControlEmptyWidget()
+        self._sound_gen_panel.value = self._sound_generation
+
+        self._sound_load = LoadSoundPanel(parent_win=self)
+
+        self._sound_load_panel = ControlEmptyWidget()
+        self._sound_load_panel.value = self._sound_load
+
+        self._sound_card = SoundCardModule()
+        self._wave_int = []
 
         self.formset = [
-            '_panel',
+            {
+                'a:Generate sound': ['_sound_gen_panel'],
+                'b:Load from disk': ['_sound_load_panel'],
+            },
+            'h5:Send sound',
+            ('_usb_port', '_refresh_usb_ports', '_connect_btn'),
+            '_send_btn',
+            ' '
         ]
 
+        self._fill_usb_ports()
+
         self.set_margin(10)
+
+    def _fill_usb_ports(self):
+        self._usb_port.add_item('', '')
+        if self._sound_card:
+            usb_devices = self._sound_card.devices
+            for n, item in enumerate(usb_devices):
+                item_str = item.product + ' {n} (port={port})'.format(n=n, port=item.port_number)
+                self._usb_port.add_item(item_str, item)
+
+    def __combo_usb_ports_changed_evt(self):
+        # TODO: self._sound_card.close()
+        self._connect_btn.enabled = True
+
+    def __refresh_usb_ports_btn_pressed(self):
+        tmp = self._usb_port.value
+        self._usb_port.clear()
+        self._fill_usb_ports()
+        self._usb_port.value = tmp
+
+    def __connect_btn_pressed(self):
+
+        if not self._usb_port.value:
+            self.warning("Please select a serial port before proceeding.", "No serial port selected")
+            return
+
+        self._sound_card.open(device=self._usb_port.value)
+
+        # update some visual elements?
+        self._connect_btn.enabled = False
+
+    def __send_btn_pressed(self):
+        if not self._sound_card.connected:
+            self.warning("Please connect to the sound card before proceeding",
+                         "No connection to the sound card established.")
+            return
+
+        if not self._sound_generation.generated or not self._sound_load.loaded:
+            self.warning("Please generate or load a sound before proceeding",
+                         "No sound data to send to the sound card")
+
+        # TODO: send to board
