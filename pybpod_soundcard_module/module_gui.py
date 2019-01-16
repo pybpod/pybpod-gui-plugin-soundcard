@@ -2,7 +2,7 @@ from pyforms_gui.controls.control_checkbox import ControlCheckBox
 from scipy.io import wavfile
 import numpy as np
 from AnyQt import QtGui
-from AnyQt.QtWidgets import QFileDialog, QSizePolicy
+from AnyQt.QtWidgets import QFileDialog
 from confapp import conf
 from pybpodgui_api.utils.generate_sound import generate_sound
 from pyforms_gui.basewidget import BaseWidget
@@ -13,7 +13,7 @@ from pyforms_gui.controls.control_label import ControlLabel
 from pyforms_gui.controls.control_number import ControlNumber
 from pyforms_gui.controls.control_text import ControlText
 
-from .module_api import SoundCardModule, SampleRate
+from .module_api import SoundCardModule, SampleRate, DataType
 
 
 class SoundGenerationPanel(BaseWidget):
@@ -57,12 +57,23 @@ class SoundGenerationPanel(BaseWidget):
         self.set_margin(10)
 
     @property
+    def sample_rate(self):
+        return self._sample_rate.value
+
+    @property
+    def filename(self):
+        return self._filename.value
+
+    @property
     def wave_int(self):
         return self._wave_int
 
     @property
     def generated(self):
         return self._generated
+
+    def sound_generated(self):
+        pass
 
     def __filename_changed_evt(self):
         if not self._filename.value:
@@ -99,13 +110,14 @@ class SoundGenerationPanel(BaseWidget):
                                         int(self._freq_left.value),
                                         int(self._freq_right.value))
 
-        if self._filename.value:
-            self.success("Sound file written successfully to '{filename}'".format(filename=self._filename),
-                         "File written successfully")
-        else:
-            self.success("Sound generated successfully. It can now be sent to the Sound Card",
-                         "Sound generated successfully")
+        # if self._filename.value:
+        #     self.success("Sound file written successfully to '{filename}'".format(filename=self._filename),
+        #                  "File written successfully")
+        # else:
+        #     self.success("Sound generated successfully. It can now be sent to the Sound Card",
+        #                  "Sound generated successfully")
 
+        self.sound_generated()
         self._generated = True
 
 
@@ -135,8 +147,10 @@ class LoadSoundPanel(BaseWidget):
         self._filename.value, _ = QFileDialog.getOpenFileName(caption='Choose WAV file', filter='WAV(*.wav)')
         if self._filename.value:
             # read wave file as numpy int32
+            # TODO: try except here to deal with the possible errors
             fs, data = wavfile.read(self._filename.value)
             self._wave_int = np.array(data, dtype=np.int32)
+            self.sound_loaded()
             self._loaded = True
 
     @property
@@ -146,6 +160,9 @@ class LoadSoundPanel(BaseWidget):
     @property
     def loaded(self):
         return self._loaded
+
+    def sound_loaded(self):
+        pass
 
 
 class SoundCardModuleGUI(SoundCardModule, BaseWidget):
@@ -161,14 +178,18 @@ class SoundCardModuleGUI(SoundCardModule, BaseWidget):
                                                 default=self.__refresh_usb_ports_btn_pressed,
                                                 helptext="Press here to refresh the list of available devices.")
         self._connect_btn = ControlButton('Connect', default=self.__connect_btn_pressed)
-        self._send_btn = ControlButton('Send to sound card', default=self.__send_btn_pressed)
+        self._send_btn = ControlButton('Send to sound card', default=self.__send_btn_pressed, enabled=False)
+        self._index_to_send = ControlNumber('Index to send', default=2, minimum=2, maximum=32)
+        self._status = ControlLabel('')
 
         self._sound_generation = SoundGenerationPanel(parent_win=self)
+        self._sound_generation.sound_generated = self._sound_generated
 
         self._sound_gen_panel = ControlEmptyWidget()
         self._sound_gen_panel.value = self._sound_generation
 
         self._sound_load = LoadSoundPanel(parent_win=self)
+        self._sound_load.sound_loaded = self._sound_loaded
 
         self._sound_load_panel = ControlEmptyWidget()
         self._sound_load_panel.value = self._sound_load
@@ -183,8 +204,10 @@ class SoundCardModuleGUI(SoundCardModule, BaseWidget):
             },
             'h5:Send sound',
             ('_usb_port', '_refresh_usb_ports', '_connect_btn'),
+            '_index_to_send',
             '_send_btn',
-            ' '
+            ' ',
+            '_status'
         ]
 
         self._fill_usb_ports()
@@ -199,9 +222,23 @@ class SoundCardModuleGUI(SoundCardModule, BaseWidget):
                 item_str = item.product + ' {n} (port={port})'.format(n=n, port=item.port_number)
                 self._usb_port.add_item(item_str, item)
 
+    def _sound_generated(self):
+        if self._sound_generation.filename:
+            self._status.value = "Sound generated successfully and saved to '{file}'.".format(file=self._sound_generation.filename)
+        else:
+            self._status.value = "Sound generated successfully."
+        if not self._connect_btn.enabled:
+            self._send_btn.enabled = True
+
+    def _sound_loaded(self):
+        self._status.value = "Sound loaded successfully from disk."
+        if not self._connect_btn.enabled:
+            self._send_btn.enabled = True
+
     def __combo_usb_ports_changed_evt(self):
         # TODO: self._sound_card.close()
         self._connect_btn.enabled = True
+        self._send_btn.enabled = False
 
     def __refresh_usb_ports_btn_pressed(self):
         tmp = self._usb_port.value
@@ -217,8 +254,11 @@ class SoundCardModuleGUI(SoundCardModule, BaseWidget):
 
         self._sound_card.open(device=self._usb_port.value)
 
-        # update some visual elements?
+        # update visual elements
         self._connect_btn.enabled = False
+
+        if self._sound_generation.generated or self._sound_load.loaded:
+            self._send_btn.enabled = True
 
     def __send_btn_pressed(self):
         if not self._sound_card.connected:
@@ -226,8 +266,13 @@ class SoundCardModuleGUI(SoundCardModule, BaseWidget):
                          "No connection to the sound card established.")
             return
 
-        if not self._sound_generation.generated or not self._sound_load.loaded:
-            self.warning("Please generate or load a sound before proceeding",
-                         "No sound data to send to the sound card")
+        if (self._sound_generation.generated or self._sound_load.loaded) and self._sound_card.connected:
+            wave_int = self._sound_generation.wave_int if self._sound_generation.generated else self._sound_load.wave_int
 
-        # TODO: send to board
+            self._sound_card.send_sound(wave_int,
+                                        int(self._index_to_send.value),
+                                        self._sound_generation.sample_rate,
+                                        DataType.INT32,
+                                        self._sound_generation.filename if self._sound_generation.filename else "Sound at index {id}".format(id=int(self._index_to_send.value))
+                                        )
+            self._status.value = "Sound sent successfully to the sound card."
