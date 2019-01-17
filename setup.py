@@ -5,7 +5,8 @@ from setuptools import setup, find_packages
 
 requirements = [
 	'libusb',
-	'pyusb'
+	'pyusb',
+	'aenum'
 ]
 
 setup(

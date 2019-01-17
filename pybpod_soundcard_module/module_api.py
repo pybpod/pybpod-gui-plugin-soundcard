@@ -3,7 +3,8 @@ import math
 import time
 
 import numpy as np
-from enum import Enum, IntEnum, auto
+from enum import Enum, IntEnum
+from aenum import auto
 import os
 import collections
 import serial
