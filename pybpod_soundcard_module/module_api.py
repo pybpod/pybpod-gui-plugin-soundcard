@@ -243,7 +243,7 @@ class SoundCardModule(object):
                             os.unlink(file_path)
                     except Exception as e:
                         # probably a permissions error while deleting, ignore and try the next one
-                        print(f"Error occurred when deleting file '{file_path}'. Ignoring error and continuing.")
+                        print("Error occurred when deleting file '{file_path}'. Ignoring error and continuing.".format(file_path=file_path))
                         continue
 
         if sound_index is None:
