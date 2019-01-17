@@ -2,7 +2,7 @@ from pyforms_gui.controls.control_checkbox import ControlCheckBox
 from scipy.io import wavfile
 import numpy as np
 from AnyQt import QtGui
-from AnyQt.QtWidgets import QFileDialog
+from AnyQt.QtWidgets import QFileDialog, QStatusBar
 from confapp import conf
 from pybpodgui_api.utils.generate_sound import generate_sound
 from pyforms_gui.basewidget import BaseWidget
@@ -172,6 +172,8 @@ class SoundCardModuleGUI(SoundCardModule, BaseWidget):
         BaseWidget.__init__(self, self.TITLE, parent_win=parent_win)
         SoundCardModule.__init__(self)
 
+        self._msg_duration = 3000
+
         self._usb_port = ControlCombo('USB port', changed_event=self.__combo_usb_ports_changed_evt)
         self._refresh_usb_ports = ControlButton('',
                                                 icon=QtGui.QIcon(conf.REFRESH_SMALL_ICON),
@@ -180,7 +182,6 @@ class SoundCardModuleGUI(SoundCardModule, BaseWidget):
         self._connect_btn = ControlButton('Connect', default=self.__connect_btn_pressed)
         self._send_btn = ControlButton('Send to sound card', default=self.__send_btn_pressed, enabled=False)
         self._index_to_send = ControlNumber('Index to send', default=2, minimum=2, maximum=32)
-        self._status = ControlLabel('')
 
         self._sound_generation = SoundGenerationPanel(parent_win=self)
         self._sound_generation.sound_generated = self._sound_generated
@@ -206,13 +207,19 @@ class SoundCardModuleGUI(SoundCardModule, BaseWidget):
             ('_usb_port', '_refresh_usb_ports', '_connect_btn'),
             '_index_to_send',
             '_send_btn',
-            ' ',
-            '_status'
+            ' '
         ]
 
         self._fill_usb_ports()
 
         self.set_margin(10)
+
+        self._status_bar = QStatusBar(parent=self)
+        # self._status_bar.show()
+
+    def init_form(self):
+        super(SoundCardModuleGUI, self).init_form()
+        self.layout().addWidget(self._status_bar)
 
     def _fill_usb_ports(self):
         self._usb_port.add_item('', '')
@@ -224,14 +231,14 @@ class SoundCardModuleGUI(SoundCardModule, BaseWidget):
 
     def _sound_generated(self):
         if self._sound_generation.filename:
-            self._status.value = "Sound generated successfully and saved to '{file}'.".format(file=self._sound_generation.filename)
+            self._status_bar.showMessage("Sound generated successfully and saved to '{file}'.".format(file=self._sound_generation.filename), self._msg_duration)
         else:
-            self._status.value = "Sound generated successfully."
+            self._status_bar.showMessage("Sound generated successfully.", self._msg_duration)
         if not self._connect_btn.enabled:
             self._send_btn.enabled = True
 
     def _sound_loaded(self):
-        self._status.value = "Sound loaded successfully from disk."
+        self._status_bar.showMessage("Sound loaded successfully from disk.", self._msg_duration)
         if not self._connect_btn.enabled:
             self._send_btn.enabled = True
 
@@ -275,4 +282,4 @@ class SoundCardModuleGUI(SoundCardModule, BaseWidget):
                                         DataType.INT32,
                                         self._sound_generation.filename if self._sound_generation.filename else "Sound at index {id}".format(id=int(self._index_to_send.value))
                                         )
-            self._status.value = "Sound sent successfully to the sound card."
+            self._status_bar.showMessage( "Sound sent successfully to the sound card.", self._msg_duration)
