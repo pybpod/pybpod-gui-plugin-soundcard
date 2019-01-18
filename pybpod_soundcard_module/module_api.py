@@ -590,22 +590,21 @@ class SoundCardModule(object):
         metadata.sample_rate = int.from_bytes(read_reply_cmd[20:20 + int32_size], byteorder='little', signed=True)
         metadata.data_type = int.from_bytes(read_reply_cmd[24:24 + int32_size], byteorder='little', signed=True)
 
-        metadata.sound_filename = read_reply_cmd[28:170].tostring().strip(b'\0')
+        metadata.sound_filename = read_reply_cmd[28:170].tobytes().strip(b'\0')
 
         metadata.has_metadata = False
         metadata.metadata_filename = ''
         if read_reply_cmd[28 + 170]:
             metadata.has_metadata = True
             metadata.metadata_array[0:1024] = read_reply_cmd[28 + 512:28 + 512 + 1024]
-            metadata.metadata_filename = read_reply_cmd[28 + 170: 28 + 170 + 170].tostring().strip(b'\0')
+            metadata.metadata_filename = read_reply_cmd[28 + 170: 28 + 170 + 170].tobytes().strip(b'\0')
 
         metadata.has_description = False
         metadata.description_filename = ''
         if read_reply_cmd[28 + 170 + 170]:
             metadata.has_description = True
             metadata.description[0:512] = read_reply_cmd[28 + 512 + 1024:28 + 512 + 1024 + 512]
-            metadata.description_filename = read_reply_cmd[28 + 170 + 170: 28 + 170 + 170 + 170].tostring().strip(
-                b'\0')
+            metadata.description_filename = read_reply_cmd[28 + 170 + 170: 28 + 170 + 170 + 170].tobytes().strip(b'\0')
 
         return metadata
 
