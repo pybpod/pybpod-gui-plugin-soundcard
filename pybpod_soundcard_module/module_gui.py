@@ -110,13 +110,6 @@ class SoundGenerationPanel(BaseWidget):
                                         int(self._freq_left.value),
                                         int(self._freq_right.value))
 
-        # if self._filename.value:
-        #     self.success("Sound file written successfully to '{filename}'".format(filename=self._filename),
-        #                  "File written successfully")
-        # else:
-        #     self.success("Sound generated successfully. It can now be sent to the Sound Card",
-        #                  "Sound generated successfully")
-
         self.sound_generated()
         self._generated = True
 
@@ -128,7 +121,7 @@ class LoadSoundPanel(BaseWidget):
 
         self._loaded = False
 
-        self._filename = ControlText('Load WAV file', '')
+        self._filename = ControlText('Sound file', '')
         self._read_btn = ControlButton('Browse', default=self.__prompt_read_file_evt)
 
         self._wave_int = []
@@ -144,12 +137,17 @@ class LoadSoundPanel(BaseWidget):
         """
         Opens a window for user to select where to save the sound .bin file
         """
-        self._filename.value, _ = QFileDialog.getOpenFileName(caption='Choose WAV file', filter='WAV(*.wav)')
+        self._filename.value, _ = QFileDialog.getOpenFileName(caption='Choose sound file',
+                                                              filter='Harp sound file(*.bin);;WAV(*.wav)')
         if self._filename.value:
-            # read wave file as numpy int32
-            # TODO: try except here to deal with the possible errors
-            fs, data = wavfile.read(self._filename.value)
-            self._wave_int = np.array(data, dtype=np.int32)
+            # TODO: try except here to deal with the possible errors while reading the file
+            # assume that if the file extension ends .wav is a wave file, otherwise just try to read as a Harp sound
+            if self._filename.value.endswith('.wav'):
+                fs, data = wavfile.read(self._filename.value)
+                self._wave_int = np.array(data, dtype=np.int32)
+            else:
+                self._wave_int = np.fromfile(self._filename.value, dtype=np.int32)
+
             self.sound_loaded()
             self._loaded = True
 

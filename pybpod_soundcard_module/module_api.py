@@ -326,6 +326,17 @@ class SoundCardModule(object):
 
     def send_sound(self, wave_int, sound_index, sample_rate, data_type, sound_filename=None, metadata_filename=None,
                    description_filename=None):
+        """
+            This method will send the sound to the Harp Sound Card as a byte array (int8)
+            :param self:
+            :param wave_int: NumPy array as int32 that represents the sound data
+            :param sound_index:  The destination index in the Sound Card (>=2 and <= 32)
+            :param sample_rate: The SampleRate enum value for either 96KHz or 192KHz
+            :param data_type: The DataType enum value for either Int32 or Float32 (not implemented yet in the hardware)
+            :param sound_filename: The name of the sound filename to be saved with the sound in the board (str)
+            :param metadata_filename: The name of the metadata filename to be saved with the sound in the board (str)
+            :param description_filename: The name of the description filename to be saved with the sound in the board (str)
+        """
         self.to_soundcard(wave_int, sound_index, sample_rate, data_type, sound_filename, metadata_filename,
                           description_filename)
 
