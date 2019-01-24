@@ -1,4 +1,5 @@
 from pyforms_gui.controls.control_checkbox import ControlCheckBox
+from pyforms_gui.controls.control_textarea import ControlTextArea
 from scipy.io import wavfile
 import numpy as np
 from AnyQt import QtGui
@@ -23,7 +24,7 @@ class SoundGenerationPanel(BaseWidget):
 
         self._generated = False
 
-        self._save_file_checkbox = ControlCheckBox('Write file to disk',
+        self._save_file_checkbox = ControlCheckBox('Write sound to file',
                                                    default=False,
                                                    changed_event=self.__save_file_checkbox_evt)
 
@@ -46,7 +47,6 @@ class SoundGenerationPanel(BaseWidget):
 
         # Define the organization of the forms
         self.formset = [
-            'h5:Sound generation',
             '_save_file_checkbox',
             ('_filename', '_saveas_btn'),
             ('_duration', ' ', '_sample_rate'),
@@ -127,7 +127,6 @@ class LoadSoundPanel(BaseWidget):
         self._wave_int = []
 
         self.formset = [
-            'h5:Load sound from disk',
             ('_filename', '_read_btn')
         ]
 
@@ -172,6 +171,9 @@ class SoundCardModuleGUI(SoundCardModule, BaseWidget):
 
         self._msg_duration = 3000
 
+        self._open_gen_panel = ControlButton('Generate sound', default=self.__open_gen_panel_btn_evt)
+        self._open_load_panel = ControlButton('Load sound from disk', default=self.__open_load_panel_btn_evt)
+
         self._usb_port = ControlCombo('USB port', changed_event=self.__combo_usb_ports_changed_evt)
         self._refresh_usb_ports = ControlButton('',
                                                 icon=QtGui.QIcon(conf.REFRESH_SMALL_ICON),
@@ -180,6 +182,10 @@ class SoundCardModuleGUI(SoundCardModule, BaseWidget):
         self._connect_btn = ControlButton('Connect', default=self.__connect_btn_pressed)
         self._send_btn = ControlButton('Send to sound card', default=self.__send_btn_pressed, enabled=False)
         self._index_to_send = ControlNumber('Index to send', default=2, minimum=2, maximum=32)
+        self._folder = ControlText('Data folder', '', changed_event=self.__folder_changed_evt)
+        self._browse_btn = ControlButton('Browse', default=self.__prompt_browse_file_evt)
+        self._filename_send = ControlText('Filename (optional)')
+        self._description_send = ControlTextArea('Description (optional)')
 
         self._sound_generation = SoundGenerationPanel(parent_win=self)
         self._sound_generation.sound_generated = self._sound_generated
@@ -197,15 +203,19 @@ class SoundCardModuleGUI(SoundCardModule, BaseWidget):
         self._wave_int = []
 
         self.formset = [
+            ('_usb_port', '_refresh_usb_ports', '_connect_btn'),
             {
                 'a:Generate sound': ['_sound_gen_panel'],
-                'b:Load from disk': ['_sound_load_panel'],
+                'b:Load sound from disk': ['_sound_load_panel'],
             },
-            'h5:Send sound',
-            ('_usb_port', '_refresh_usb_ports', '_connect_btn'),
-            '_index_to_send',
-            '_send_btn',
-            ' '
+            ' ',
+            {
+                'a:Send data': ['_index_to_send',
+                                '_filename_send',
+                                '_description_send',
+                                '_send_btn'],
+                'b:Receive data': [('_folder', '_browse_btn')]
+            }
         ]
 
         self._fill_usb_ports()
@@ -213,7 +223,6 @@ class SoundCardModuleGUI(SoundCardModule, BaseWidget):
         self.set_margin(10)
 
         self._status_bar = QStatusBar(parent=self)
-        # self._status_bar.show()
 
     def init_form(self):
         super(SoundCardModuleGUI, self).init_form()
@@ -240,6 +249,14 @@ class SoundCardModuleGUI(SoundCardModule, BaseWidget):
         if not self._connect_btn.enabled:
             self._send_btn.enabled = True
 
+    def __open_gen_panel_btn_evt(self):
+        self._testing = SoundGenerationPanel()
+        self._testing.show()
+
+    def __open_load_panel_btn_evt(self):
+        self._testing_load = LoadSoundPanel()
+        self._testing_load.show()
+
     def __combo_usb_ports_changed_evt(self):
         # TODO: self._sound_card.close()
         self._connect_btn.enabled = True
@@ -250,6 +267,15 @@ class SoundCardModuleGUI(SoundCardModule, BaseWidget):
         self._usb_port.clear()
         self._fill_usb_ports()
         self._usb_port.value = tmp
+
+    def __folder_changed_evt(self):
+        # TODO: change visual elements?
+        pass
+
+    def __prompt_browse_file_evt(self):
+        self._folder.value = QFileDialog.getExistingDirectory()
+
+        #TODO: change visual elements?
 
     def __connect_btn_pressed(self):
 
