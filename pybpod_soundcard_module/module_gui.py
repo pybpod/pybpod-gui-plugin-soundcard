@@ -171,15 +171,13 @@ class SoundCardModuleGUI(SoundCardModule, BaseWidget):
 
         self._msg_duration = 3000
 
-        self._open_gen_panel = ControlButton('Generate sound', default=self.__open_gen_panel_btn_evt)
-        self._open_load_panel = ControlButton('Load sound from disk', default=self.__open_load_panel_btn_evt)
-
         self._usb_port = ControlCombo('USB port', changed_event=self.__combo_usb_ports_changed_evt)
         self._refresh_usb_ports = ControlButton('',
                                                 icon=QtGui.QIcon(conf.REFRESH_SMALL_ICON),
                                                 default=self.__refresh_usb_ports_btn_pressed,
                                                 helptext="Press here to refresh the list of available devices.")
         self._connect_btn = ControlButton('Connect', default=self.__connect_btn_pressed)
+
         self._send_btn = ControlButton('Send to sound card', default=self.__send_btn_pressed, enabled=False)
         self._index_to_send = ControlNumber('Index to send', default=2, minimum=2, maximum=32)
         self._folder = ControlText('Data folder', '', changed_event=self.__folder_changed_evt)
@@ -189,13 +187,11 @@ class SoundCardModuleGUI(SoundCardModule, BaseWidget):
 
         self._sound_generation = SoundGenerationPanel(parent_win=self)
         self._sound_generation.sound_generated = self._sound_generated
-
         self._sound_gen_panel = ControlEmptyWidget()
         self._sound_gen_panel.value = self._sound_generation
 
         self._sound_load = LoadSoundPanel(parent_win=self)
         self._sound_load.sound_loaded = self._sound_loaded
-
         self._sound_load_panel = ControlEmptyWidget()
         self._sound_load_panel.value = self._sound_load
 
@@ -249,14 +245,6 @@ class SoundCardModuleGUI(SoundCardModule, BaseWidget):
         if not self._connect_btn.enabled:
             self._send_btn.enabled = True
 
-    def __open_gen_panel_btn_evt(self):
-        self._testing = SoundGenerationPanel()
-        self._testing.show()
-
-    def __open_load_panel_btn_evt(self):
-        self._testing_load = LoadSoundPanel()
-        self._testing_load.show()
-
     def __combo_usb_ports_changed_evt(self):
         # TODO: self._sound_card.close()
         self._connect_btn.enabled = True
@@ -306,4 +294,4 @@ class SoundCardModuleGUI(SoundCardModule, BaseWidget):
                                         DataType.INT32,
                                         self._sound_generation.filename if self._sound_generation.filename else "Sound at index {id}".format(id=int(self._index_to_send.value))
                                         )
-            self._status_bar.showMessage( "Sound sent successfully to the sound card.", self._msg_duration)
+            self._status_bar.showMessage("Sound sent successfully to the sound card.", self._msg_duration)
