@@ -83,7 +83,7 @@ class SoundGenerationPanel(BaseWidget):
 
     def __prompt_save_file_evt(self):
         """
-        Opens a window for user to select where to save the sound .bin file
+        Opens a window for the user to select where to save the Harp sound file (.bin extension by default)
         """
         self._filename.value, _ = QFileDialog.getSaveFileName()
         if self._filename.value:
@@ -104,8 +104,8 @@ class SoundGenerationPanel(BaseWidget):
             return
 
         self._wave_int = generate_sound(self._filename.value,
+                                        # _sample_rate.value is an Enum so we need to get the value from it
                                         self._sample_rate.value.value,
-                                        # fs.value has a Enum so we need to get the value from it
                                         self._duration.value,
                                         int(self._freq_left.value),
                                         int(self._freq_right.value))
@@ -139,10 +139,13 @@ class LoadSoundPanel(BaseWidget):
         self._filename.value, _ = QFileDialog.getOpenFileName(caption='Choose sound file',
                                                               filter='Harp sound file(*.bin);;WAV(*.wav)')
         if self._filename.value:
-            # TODO: try except here to deal with the possible errors while reading the file
             # assume that if the file extension ends .wav is a wave file, otherwise just try to read as a Harp sound
             if self._filename.value.endswith('.wav'):
-                fs, data = wavfile.read(self._filename.value)
+                try:
+                    fs, data = wavfile.read(self._filename.value)
+                except Exception:
+                    self.critical("Error while opening the WAV file. Please try again or try loading another file.")
+                    return
                 self._wave_int = np.array(data, dtype=np.int32)
             else:
                 self._wave_int = np.fromfile(self._filename.value, dtype=np.int32)
@@ -246,7 +249,7 @@ class SoundCardModuleGUI(SoundCardModule, BaseWidget):
             self._send_btn.enabled = True
 
     def __combo_usb_ports_changed_evt(self):
-        # TODO: self._sound_card.close()
+        self._sound_card.close()
         self._connect_btn.enabled = True
         self._send_btn.enabled = False
 
