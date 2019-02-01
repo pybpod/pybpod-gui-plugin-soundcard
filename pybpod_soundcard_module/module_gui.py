@@ -28,7 +28,7 @@ class SoundGenerationPanel(BaseWidget):
                                                    default=False,
                                                    changed_event=self.__save_file_checkbox_evt)
 
-        self._filename = ControlText('Sound filename', '', enabled=False, changed_event=self.__filename_changed_evt)
+        self._filename = ControlText('Sound filename', '', changed_event=self.__filename_changed_evt, enabled=False)
         self._saveas_btn = ControlButton('Save As...', default=self.__prompt_save_file_evt, enabled=False)
 
         self._freq_label = ControlLabel('Frequency (Hz)', style='font-weight:bold;margin-left:0')
@@ -181,20 +181,36 @@ class SoundCardModuleGUI(SoundCardModule, BaseWidget):
                                                 helptext="Press here to refresh the list of available devices.")
         self._connect_btn = ControlButton('Connect', default=self.__connect_btn_pressed)
 
+        # Send data
         self._send_btn = ControlButton('Send to sound card', default=self.__send_btn_pressed, enabled=False)
         self._index_to_send = ControlNumber('Index to send', default=2, minimum=2, maximum=32)
-        self._folder = ControlText('Data folder', '', changed_event=self.__folder_changed_evt)
-        self._browse_btn = ControlButton('Browse', default=self.__prompt_browse_file_evt)
         self._filename_send = ControlText('Filename (optional)')
         self._description_send = ControlTextArea('Description (optional)')
 
+        self._send_panel = ControlEmptyWidget()
+        self._send_panel.value = [self._index_to_send, self._filename_send, self._description_send, self._send_btn]
+        self._send_panel.setContentsMargins(10, 10, 10, 10)
+
+        # Receive data
+        self._index_to_read = ControlNumber('Index to read', default=2, minimum=2, maximum=32)
+        self._read_all_checkbox = ControlCheckBox('Read all indexes',
+                                                  default=False,
+                                                  changed_event=self.__read_all_checkbox_evt)
+        self._dest_folder = ControlText('Destination folder', '', changed_event=self.__folder_changed_evt)
+        self._browse_btn = ControlButton('Browse', default=self.__prompt_browse_file_evt)
+        self._read_btn = ControlButton('Read data', default=self.__read_btn_pressed, enabled=False)
+
+        self._receive_panel = ControlEmptyWidget()
+        self._receive_panel.value = [self._read_all_checkbox, self._index_to_read, self._dest_folder, self._browse_btn, self._read_btn]
+        self._receive_panel.setContentsMargins(10, 10, 10, 10)
+
         self._sound_generation = SoundGenerationPanel(parent_win=self)
-        self._sound_generation.sound_generated = self._sound_generated
+        self._sound_generation.sound_generated = self._sound_generated_evt
         self._sound_gen_panel = ControlEmptyWidget()
         self._sound_gen_panel.value = self._sound_generation
 
         self._sound_load = LoadSoundPanel(parent_win=self)
-        self._sound_load.sound_loaded = self._sound_loaded
+        self._sound_load.sound_loaded = self._sound_loaded_evt
         self._sound_load_panel = ControlEmptyWidget()
         self._sound_load_panel.value = self._sound_load
 
@@ -209,11 +225,8 @@ class SoundCardModuleGUI(SoundCardModule, BaseWidget):
             },
             ' ',
             {
-                'a:Send data': ['_index_to_send',
-                                '_filename_send',
-                                '_description_send',
-                                '_send_btn'],
-                'b:Receive data': [('_folder', '_browse_btn')]
+                'a:Send data': ['_send_panel'],
+                'b:Receive data': ['_receive_panel']
             }
         ]
 
@@ -235,7 +248,7 @@ class SoundCardModuleGUI(SoundCardModule, BaseWidget):
                 item_str = item.product + ' {n} (port={port})'.format(n=n, port=item.port_number)
                 self._usb_port.add_item(item_str, item)
 
-    def _sound_generated(self):
+    def _sound_generated_evt(self):
         if self._sound_generation.filename:
             self._status_bar.showMessage("Sound generated successfully and saved to '{file}'.".format(file=self._sound_generation.filename), self._msg_duration)
         else:
@@ -243,10 +256,17 @@ class SoundCardModuleGUI(SoundCardModule, BaseWidget):
         if not self._connect_btn.enabled:
             self._send_btn.enabled = True
 
-    def _sound_loaded(self):
+    def _sound_loaded_evt(self):
         self._status_bar.showMessage("Sound loaded successfully from disk.", self._msg_duration)
         if not self._connect_btn.enabled:
             self._send_btn.enabled = True
+
+    def __read_all_checkbox_evt(self):
+        self._index_to_read.enabled = not self._read_all_checkbox.value
+
+    def __read_btn_pressed(self):
+        #TODO get the data from the soundcard
+        pass
 
     def __combo_usb_ports_changed_evt(self):
         self._sound_card.close()
@@ -260,16 +280,20 @@ class SoundCardModuleGUI(SoundCardModule, BaseWidget):
         self._usb_port.value = tmp
 
     def __folder_changed_evt(self):
-        # TODO: change visual elements?
-        pass
+        if not self._dest_folder.value:
+            self._read_btn.enabled = False
+        else:
+            self._read_btn.enabled = True
 
     def __prompt_browse_file_evt(self):
-        self._folder.value = QFileDialog.getExistingDirectory()
+        self._dest_folder.value = QFileDialog.getExistingDirectory()
 
-        #TODO: change visual elements?
+        if self._dest_folder.value:
+            self._read_btn.enabled = True
+        else:
+            self._read_btn.enabled = False
 
     def __connect_btn_pressed(self):
-
         if not self._usb_port.value:
             self.warning("Please select a serial port before proceeding.", "No serial port selected")
             return
