@@ -276,14 +276,15 @@ class SoundCardModuleGUI(SoundCardModule, BaseWidget):
 
     def __read_btn_pressed(self):
         if not self._sound_card.connected:
-            self.warning("Please connect to the sound card before proceeding.", "Not connected to the sound card")
+            self.warning("Please connect to the sound card before proceeding.","Not connected to the sound card")
+            return
 
         # check if read all or read a specific index
         index_to_read = None if self._read_all_checkbox.value is True else int(self._index_to_read.value)
 
         # check if the folder exists
         if not os.path.isdir(self._dest_folder.value):
-            self.critical("Folder doesn't exist. Please correct the path to an existing folder and try again")
+            self.critical("Folder doesn't exist. Please correct the path to an existing folder and try again", "Path not found")
             return
 
         # read sound
