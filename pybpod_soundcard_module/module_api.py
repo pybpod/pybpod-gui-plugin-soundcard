@@ -250,6 +250,8 @@ class SoundCardModule(object):
         if sound_index is None:
             for i in range(2, 32):
                 self.from_soundcard(output_folder, i)
+        else:
+            self.from_soundcard(output_folder, sound_index)
 
         print("All files read!")
 
