@@ -406,13 +406,13 @@ class SoundCardModule(object):
 
         if sound_filename:
             tmp = bytearray()
-            tmp.extend(map(ord, sound_filename))
+            tmp.extend(map(ord, os.path.basename(sound_filename)))
             tmp_size = len(tmp) if len(tmp) < 169 else 169
             user_metadata[0:tmp_size] = tmp[0:tmp_size]
 
         if metadata_filename:
             tmp = bytearray()
-            tmp.extend(map(ord, metadata_filename))
+            tmp.extend(map(ord, os.path.basename(metadata_filename)))
             tmp_size = len(tmp) if len(tmp) < 169 else 169
             user_metadata[170: 170 + tmp_size] = tmp[0:tmp_size]
 
@@ -432,7 +432,7 @@ class SoundCardModule(object):
 
         if description_filename:
             tmp = bytearray()
-            tmp.extend(map(ord, description_filename))
+            tmp.extend(map(ord, os.path.basename(description_filename)))
             tmp_size = len(tmp) if len(tmp) < 169 else 169
             user_metadata[340: 340 + tmp_size] = tmp[0: tmp_size]
 

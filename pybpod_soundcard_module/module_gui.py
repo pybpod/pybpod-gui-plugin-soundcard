@@ -1,4 +1,6 @@
 import os
+import tempfile
+
 from pyforms_gui.controls.control_checkbox import ControlCheckBox
 from pyforms_gui.controls.control_textarea import ControlTextArea
 from scipy.io import wavfile
@@ -185,11 +187,14 @@ class SoundCardModuleGUI(SoundCardModule, BaseWidget):
         # Send data
         self._send_btn = ControlButton('Send to sound card', default=self.__send_btn_pressed, enabled=False)
         self._index_to_send = ControlNumber('Index to send', default=2, minimum=2, maximum=32)
-        self._filename_send = ControlText('Filename (optional)')
+        self._user_metadata_send = ControlTextArea('User metadata (optional)')
         self._description_send = ControlTextArea('Description (optional)')
 
         self._send_panel = ControlEmptyWidget()
-        self._send_panel.value = [self._index_to_send, self._filename_send, self._description_send, self._send_btn]
+        self._send_panel.value = [self._index_to_send,
+                                  self._user_metadata_send,
+                                  self._description_send,
+                                  self._send_btn]
         self._send_panel.setContentsMargins(10, 10, 10, 10)
 
         # Receive data
@@ -276,7 +281,7 @@ class SoundCardModuleGUI(SoundCardModule, BaseWidget):
 
     def __read_btn_pressed(self):
         if not self._sound_card.connected:
-            self.warning("Please connect to the sound card before proceeding.","Not connected to the sound card")
+            self.warning("Please connect to the sound card before proceeding.", "Not connected to the sound card")
             return
 
         # check if read all or read a specific index
@@ -284,12 +289,13 @@ class SoundCardModuleGUI(SoundCardModule, BaseWidget):
 
         # check if the folder exists
         if not os.path.isdir(self._dest_folder.value):
-            self.critical("Folder doesn't exist. Please correct the path to an existing folder and try again", "Path not found")
+            self.critical("Folder doesn't exist. Please correct the path to an existing folder and try again",
+                          "Path not found")
             return
 
         # read sound
         self._sound_card.read_sounds(self._dest_folder.value, index_to_read, self._clear_folder_checkbox.value)
-        self._status_bar.showMessage("Data read successfully from the sound card", 3000)
+        self._status_bar.showMessage("Data read successfully from the sound card", self._msg_duration)
 
     def __combo_usb_ports_changed_evt(self):
         self._sound_card.close()
@@ -338,12 +344,32 @@ class SoundCardModuleGUI(SoundCardModule, BaseWidget):
         if (self._sound_generation.generated or self._sound_load.loaded) and self._sound_card.connected:
             wave_int = self._sound_generation.wave_int if self._sound_generation.generated else self._sound_load.wave_int
 
-            # process Filename and description data (optional)
+            # process Filename, metadata info and description data (optional parameters)
+            temp_dir = tempfile.gettempdir()
+            usr_metadata_file = None
+            if self._user_metadata_send:
+                usr_metadata_file = os.path.join(temp_dir, 'user_metadata.bin')
+                with open(usr_metadata_file, 'w') as f:
+                    f.write(self._user_metadata_send.value)
+
+            description_file = None
+            if self._description_send:
+                description_file = os.path.join(temp_dir, 'description.bin')
+                with open(description_file, 'w') as f:
+                    f.write(self._description_send.value)
 
             self._sound_card.send_sound(wave_int,
                                         int(self._index_to_send.value),
                                         self._sound_generation.sample_rate,
                                         DataType.INT32,
-                                        self._sound_generation.filename if self._sound_generation.filename else "Sound at index {id}".format(id=int(self._index_to_send.value))
+                                        os.path.basename(self._sound_generation.filename) if self._sound_generation.filename else "Sound{id:02d}".format(id=int(self._index_to_send.value)),
+                                        usr_metadata_file,
+                                        description_file
                                         )
             self._status_bar.showMessage("Sound sent successfully to the sound card.", self._msg_duration)
+
+            # delete the temp files
+            if usr_metadata_file is not None:
+                os.unlink(usr_metadata_file)
+            if description_file is not None:
+                os.unlink(description_file)
