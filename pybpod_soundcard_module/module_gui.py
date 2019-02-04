@@ -1,3 +1,4 @@
+import os
 from pyforms_gui.controls.control_checkbox import ControlCheckBox
 from pyforms_gui.controls.control_textarea import ControlTextArea
 from scipy.io import wavfile
@@ -196,12 +197,19 @@ class SoundCardModuleGUI(SoundCardModule, BaseWidget):
         self._read_all_checkbox = ControlCheckBox('Read all indexes',
                                                   default=False,
                                                   changed_event=self.__read_all_checkbox_evt)
+        self._clear_folder_checkbox = ControlCheckBox('Clear destination folder', default=False)
         self._dest_folder = ControlText('Destination folder', '', changed_event=self.__folder_changed_evt)
         self._browse_btn = ControlButton('Browse', default=self.__prompt_browse_file_evt)
         self._read_btn = ControlButton('Read data', default=self.__read_btn_pressed, enabled=False)
 
         self._receive_panel = ControlEmptyWidget()
-        self._receive_panel.value = [self._read_all_checkbox, self._index_to_read, self._dest_folder, self._browse_btn, self._read_btn]
+        self._receive_panel.value = [self._read_all_checkbox,
+                                     self._index_to_read,
+                                     self._clear_folder_checkbox,
+                                     self._dest_folder,
+                                     self._browse_btn,
+                                     self._read_btn]
+
         self._receive_panel.setContentsMargins(10, 10, 10, 10)
 
         self._sound_generation = SoundGenerationPanel(parent_win=self)
@@ -250,7 +258,9 @@ class SoundCardModuleGUI(SoundCardModule, BaseWidget):
 
     def _sound_generated_evt(self):
         if self._sound_generation.filename:
-            self._status_bar.showMessage("Sound generated successfully and saved to '{file}'.".format(file=self._sound_generation.filename), self._msg_duration)
+            self._status_bar.showMessage("Sound generated successfully and saved to '{file}'.".format(
+                file=self._sound_generation.filename),
+                self._msg_duration)
         else:
             self._status_bar.showMessage("Sound generated successfully.", self._msg_duration)
         if not self._connect_btn.enabled:
@@ -265,8 +275,20 @@ class SoundCardModuleGUI(SoundCardModule, BaseWidget):
         self._index_to_read.enabled = not self._read_all_checkbox.value
 
     def __read_btn_pressed(self):
-        #TODO get the data from the soundcard
-        pass
+        if not self._sound_card.connected:
+            self.warning("Please connect to the sound card before proceeding.", "Not connected to the sound card")
+
+        # check if read all or read a specific index
+        index_to_read = None if self._read_all_checkbox.value is True else int(self._index_to_read.value)
+
+        # check if the folder exists
+        if not os.path.isdir(self._dest_folder.value):
+            self.critical("Folder doesn't exist. Please correct the path to an existing folder and try again")
+            return
+
+        # read sound
+        self._sound_card.read_sounds(self._dest_folder.value, index_to_read, self._clear_folder_checkbox.value)
+        self._status_bar.showMessage("Data read successfully from the sound card", 3000)
 
     def __combo_usb_ports_changed_evt(self):
         self._sound_card.close()
@@ -314,6 +336,8 @@ class SoundCardModuleGUI(SoundCardModule, BaseWidget):
 
         if (self._sound_generation.generated or self._sound_load.loaded) and self._sound_card.connected:
             wave_int = self._sound_generation.wave_int if self._sound_generation.generated else self._sound_load.wave_int
+
+            # process Filename and description data (optional)
 
             self._sound_card.send_sound(wave_int,
                                         int(self._index_to_send.value),
