@@ -14,19 +14,26 @@ import usb.util
 
 
 class SampleRate(IntEnum):
-    _96000HZ = 96000,
+    """
+    Enumeration for the Sample rate of the sounds in the Sound Card
+    """
+
+    #: 96KHz sample rate
+    _96000HZ = 96000
+    #: 192KHz sample rate
     _192000HZ = 192000
 
 
 class DataType(IntEnum):
+    """
+    Type of the data to be send to the Sound Card
+    """
+
+    #: Integer 32 bits
     INT32 = 0,
+
+    #: Single precision float
     FLOAT32 = 1
-
-
-class SoundCommandType(IntEnum):
-    PLAY = 1,
-    STOP_SPECIFIC = 2,
-    STOP_ALL = 3
 
 
 class SoundCardErrorCode(Enum):
@@ -110,28 +117,36 @@ class SoundCardModule(object):
     USB connection. It also allows to send play and stop commands through the COM interface or through BPod.
     """
 
-    def __init__(self, serial_port=None):
+    def __init__(self, serial_port=None, device=None):
         """
-        If the serial_port is given, it will try to open it automatically. If not,
-        :param serial_port:
+        If the serial_port is given, it will try to open it automatically.
+
+        :param serial_port: (Optional) string denoting the serial port (COM) to open.
+        :param device: (Optional) libUSB device to use. If nothing is passed, it will try to connect automatically.
         """
         self._dev = None
         self._devices = list(usb.core.find(idVendor=0x04d8, idProduct=0xee6a, find_all=True))
         self._cfg = None
         self._port = None
-        self._com_port = serial_port
+        self._serial_port = serial_port
         self._connected = False
 
-        if serial_port:
-            self.open(serial_port)
+        self.open(serial_port, device)
 
-    def open(self, com_port=None, device=None):
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()
+
+    def open(self, serial_port=None, device=None):
         """
         Opens the connection to the Sound Card. If no com_port is given, it will try to connect to the first Sound Card that is connected to the computer.
-        :param com_port:
-        :param device:
+
+        :param serial_port: (Optional) string denoting the serial port (COM) to open.
+        :param device: (Optional) libUSB device to use. If nothing is passed, it will try to connect automatically.
         """
-        self._com_port = com_port
+        self._serial_port = serial_port
         if device is None:
             self._dev = usb.core.find(idVendor=0x04d8, idProduct=0xee6a)
         else:
@@ -180,7 +195,8 @@ class SoundCardModule(object):
     def reset(self):
         """
         Resets the device, waits 700ms and tries to connect again so that the current instance of the SoundCard object can still be used.
-        :note Necessary at the moment after sending a sound
+
+        .. note:: Necessary at the moment after sending a sound.
         """
         if not self._dev:
             raise Exception("Sound card might not be connected. Please connect it before any operation.")
@@ -192,40 +208,19 @@ class SoundCardModule(object):
         assert wrt == len(reset_cmd)
 
         time.sleep(700.0 / 1000.0)
-        self.open(self._com_port)
-
-    def get_command(self, command_type, sound_index=None):
-        """
-        Returns the proper bytes to send as output_actions in the StateMachine's states. In the case of the Play and StopSpecific command_types, it is required to \
-        use the bpod's load_serial_message method to be able to send to the module more than 1 byte properly.
-        :param command_type:
-        :param sound_index=None:
-        """
-        if not command_type:
-            raise Exception("You need to provide the type of the command you want returned")
-
-        if command_type is SoundCommandType.PLAY or command_type is SoundCommandType.STOP_SPECIFIC:
-            if not sound_index:
-                raise Exception("You need to provide with the sound_index value to play")
-
-            if sound_index < 2 or sound_index > 31:
-                raise Exception("sound_index must have a value between 2 and 31")
-
-        if command_type is SoundCommandType.PLAY:
-            return [ord('P'), sound_index]
-        if command_type is SoundCommandType.STOP_SPECIFIC:
-            return [ord('x'), sound_index]
-
-        # by default return stop
-        return ord('X')
+        self.open(self._serial_port)
 
     def read_sounds(self, output_folder=None, sound_index=None, clean_dst_folder=True):
         """
         Reads sounds from the sound card.
-        :note by default, it will clear the destination folder of all data. It will also write by default to a "from_soundcard" folder in the working directory if none if given
+
+        .. note:: by default, it will clear the destination folder of all data. It will also write by default to a
+                  "from_soundcard" folder in the working directory if none is given.
+
         :param output_folder: Destination folder's path.
         :param sound_index: If a sound_index is given, it will get only that sound, if nothing is passed it will gather all sounds from all indexes.
         :param clean_dst_folder: Flag that defines if the method should clean the destination folder or not
+
         """
         if not self._dev:
             raise Exception("Sound card might not be connected. Please connect it before any operation.")
@@ -249,13 +244,37 @@ class SoundCardModule(object):
 
         if sound_index is None:
             for i in range(2, 32):
-                self.from_soundcard(output_folder, i)
+                self._from_soundcard(output_folder, i)
         else:
-            self.from_soundcard(output_folder, sound_index)
+            self._from_soundcard(output_folder, sound_index)
 
         print("All files read!")
 
-    def from_soundcard(self, output_folder=None, sound_index=None):
+    def send_sound(self, wave_int, sound_index, sample_rate, data_type, 
+                   sound_filename=None, metadata_filename=None, 
+                   description_filename=None):
+        """
+            This method will send the sound to the Harp Sound Card as a byte array (int8)
+
+            :param wave_int: NumPy array as int32 that represents the sound data
+            :param sound_index:  The destination index in the Sound Card (>=2 and <= 32)
+            :param sample_rate: The SampleRate enum value for either 96KHz or 192KHz
+            :param data_type: The DataType enum value for either Int32 or Float32 (not implemented yet in the hardware)
+            :param sound_filename: The name of the sound filename to be saved with the sound in the board (str)
+            :param metadata_filename: The name of the metadata filename to be saved with the sound in the board (str)
+            :param description_filename: The name of the description filename to be saved with the sound in the board (str)
+        """
+        self._to_soundcard(wave_int, sound_index, sample_rate, data_type, sound_filename, metadata_filename,
+                          description_filename)
+
+    def _from_soundcard(self, output_folder=None, sound_index=None):
+        """
+        Reads sounds from the sound card.
+
+        :param output_folder: Destination folder's path.
+        :param sound_index: If a sound_index is given, it will get only that sound, if nothing is passed it will gather all sounds from all indexes.
+
+        """
         if not self._dev:
             raise Exception("Sound card might not be connected. Please connect it before any operation.")
 
@@ -326,27 +345,12 @@ class SoundCardModule(object):
                 if metadata.has_description:
                     f.write("USER_DESCRIPTION_FILENAME = " + description_filename + "\n")
 
-    def send_sound(self, wave_int, sound_index, sample_rate, data_type, sound_filename=None, metadata_filename=None,
-                   description_filename=None):
+    def _to_soundcard(self, wave_int, sound_index, sample_rate, data_type,
+                      sound_filename=None, metadata_filename=None, 
+                      description_filename=None):
         """
             This method will send the sound to the Harp Sound Card as a byte array (int8)
-            :param self:
-            :param wave_int: NumPy array as int32 that represents the sound data
-            :param sound_index:  The destination index in the Sound Card (>=2 and <= 32)
-            :param sample_rate: The SampleRate enum value for either 96KHz or 192KHz
-            :param data_type: The DataType enum value for either Int32 or Float32 (not implemented yet in the hardware)
-            :param sound_filename: The name of the sound filename to be saved with the sound in the board (str)
-            :param metadata_filename: The name of the metadata filename to be saved with the sound in the board (str)
-            :param description_filename: The name of the description filename to be saved with the sound in the board (str)
-        """
-        self.to_soundcard(wave_int, sound_index, sample_rate, data_type, sound_filename, metadata_filename,
-                          description_filename)
 
-    def to_soundcard(self, wave_int, sound_index, sample_rate, data_type, sound_filename=None,
-                     metadata_filename=None, description_filename=None):
-        """
-            This method will send the sound to the Harp Sound Card as a byte array (int8)
-            :param self:
             :param wave_int: NumPy array as int32 that represents the sound data
             :param sound_index:  The destination index in the Sound Card (>=2 and <= 32)
             :param sample_rate: The SampleRate enum value for either 96KHz or 192KHz
