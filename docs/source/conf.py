@@ -35,7 +35,7 @@ source_parsers = {
 # -- Project information -----------------------------------------------------
 
 project = 'Sound Card Module'
-copyright = '2018, Luís Teixeira'
+copyright = '2018-2019, Luís Teixeira'
 author = 'Luís Teixeira'
 
 # The short X.Y version
