@@ -5,7 +5,11 @@
 
 What is the PyBpod's Sound Card Module?
 =======================================
-The Sound Card Module is a board developed by...
+The Harp Sound Card is a board developed by the Scientific Hardware Platform
+at the Champalimaud Foundation.
+
+This documentation is for the Python 3 library to control the
+**pybpod_soundcard_module** module.
 
 
 Table of contents
