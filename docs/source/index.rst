@@ -9,19 +9,20 @@ The Sound Card Module is a board developed by...
 
 
 Table of contents
-=================
+-----------------
 
 .. toctree::
-    :maxdepth: 4
+    :maxdepth: 2
     :includehidden:
     :caption: First steps
 
-    getting-started.rst
+    getting-started
+    user-interface
 
 .. toctree::
-    :maxdepth: 4
+    :maxdepth: 2
     :includehidden:
     :caption: API reference
 
-    usb-api.rst
-    pybpod-api.rst
+    SoundCard USB connection <usb-api>
+    PyBpod API <pybpod-api>
