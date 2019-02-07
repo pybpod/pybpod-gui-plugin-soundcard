@@ -31,8 +31,8 @@ class SoundCard(BpodModule):
 
         .. note:: This might not be required in a future version of BPod's firmware
 
-        :param command_type:
-        :param sound_index:
+        :param command_type: Instruction of type :class:`.SoundCommandType` to generate the command
+        :param sound_index: The sound index to play or stop
 
         """
         if not command_type:
