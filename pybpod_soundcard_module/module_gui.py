@@ -173,7 +173,6 @@ class SoundCardModuleGUI(SoundCardModule, BaseWidget):
 
     def __init__(self, parent_win=None):
         BaseWidget.__init__(self, self.TITLE, parent_win=parent_win)
-        SoundCardModule.__init__(self)
 
         self._msg_duration = 3000
 
@@ -280,7 +279,7 @@ class SoundCardModuleGUI(SoundCardModule, BaseWidget):
         self._index_to_read.enabled = not self._read_all_checkbox.value
 
     def __read_btn_pressed(self):
-        if not self._sound_card.connected:
+        if self._sound_card and not self._sound_card.connected:
             self.warning("Please connect to the sound card before proceeding.", "Not connected to the sound card")
             return
 
@@ -298,7 +297,8 @@ class SoundCardModuleGUI(SoundCardModule, BaseWidget):
         self._status_bar.showMessage("Data read successfully from the sound card", self._msg_duration)
 
     def __combo_usb_ports_changed_evt(self):
-        self._sound_card.close()
+        if self._sound_card:
+            self._sound_card.close()
         self._connect_btn.enabled = True
         self._send_btn.enabled = False
 
@@ -327,7 +327,7 @@ class SoundCardModuleGUI(SoundCardModule, BaseWidget):
             self.warning("Please select a serial port before proceeding.", "No serial port selected")
             return
 
-        self._sound_card.open(device=self._usb_port.value)
+        self._sound_card = SoundCardModule(device=self._usb_port.value)
 
         # update visual elements
         self._connect_btn.enabled = False
@@ -336,7 +336,7 @@ class SoundCardModuleGUI(SoundCardModule, BaseWidget):
             self._send_btn.enabled = True
 
     def __send_btn_pressed(self):
-        if not self._sound_card.connected:
+        if self._sound_card and not self._sound_card.connected:
             self.warning("Please connect to the sound card before proceeding",
                          "No connection to the sound card established.")
             return
