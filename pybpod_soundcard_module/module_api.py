@@ -542,8 +542,6 @@ class SoundCardModule(object):
             assert rand_val_received == rand_val[0]
             assert error_received == 0
 
-        self.reset()
-
     def __get_metadata_from_device(self, sound_index):
         int32_size = np.dtype(np.int32).itemsize
 
