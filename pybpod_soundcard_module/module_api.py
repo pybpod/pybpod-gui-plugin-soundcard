@@ -104,9 +104,6 @@ class SoundMetadata(object):
 
         return SoundCardErrorCode.OK
 
-    def to_byte_array(self):
-        return bytes(self)
-
     def as_array(self):
         return np.array([self._sound_index, self._sound_length, self._sample_rate, self._data_type], dtype=np.int32)
 
@@ -282,6 +279,9 @@ class SoundCardModule(object):
             raise Exception("sound_index must have a value between 2 and 31")
 
         metadata = self.__get_metadata_from_device(sound_index)
+
+        if metadata is None:
+            raise Exception('SoundCardModule: Error while getting metadata from device')
 
         # define prefix
         prefix = 'i'
