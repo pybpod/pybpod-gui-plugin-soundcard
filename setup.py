@@ -12,7 +12,9 @@ requirements = [
 setup(
 	name='pybpod-gui-plugin-soundcard',
 	version="0.1",
-	description="""PyBpod Sound card module controller""",
+	description="""PyBpod Sound card module""",
+	long_description="""Library to control the Harp Sound Card board developed by the Scientific Hardware Platform at 
+	the Champalimaud Foundation.""",
 	author=['Luís Teixeira'],
 	author_email='micboucinha@gmail.com',
 	license='Copyright (C) 2007 Free Software Foundation, Inc. <http://fsf.org/>',
