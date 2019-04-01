@@ -8,7 +8,7 @@ import numpy as np
 from AnyQt import QtGui
 from AnyQt.QtWidgets import QFileDialog, QStatusBar
 from confapp import conf
-from pybpodgui_api.utils.generate_sound import generate_sound
+from pybpod_soundcard_module.utils.generate_sound import generate_sound
 from pyforms_gui.basewidget import BaseWidget
 from pyforms_gui.controls.control_button import ControlButton
 from pyforms_gui.controls.control_combo import ControlCombo
