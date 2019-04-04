@@ -19,6 +19,8 @@ Usage Example
 =============
 
 .. code:: python
+    import numpy as np
+    from pybpod_soundcard_module.module import SoundCard, SoundCommandType, DataType, SampleRate
 
     card = SoundCardModule()
     card.open()
@@ -45,6 +47,9 @@ Usage Example (using 'with' statement)
 ======================================
 
 .. code:: python
+    import numpy as np
+    from pybpod_soundcard_module.module import SoundCard, SoundCommandType
+    from pybpod_soundcard_module.module_api import DataType, SampleRate
 
     # load file and read data (we are using the numpy's fromfile method)
     wave_int = np.fromfile(sound_filename, dtype=np.int32)
