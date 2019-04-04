@@ -19,6 +19,7 @@ Usage Example
 =============
 
 .. code:: python
+
     import numpy as np
     from pybpod_soundcard_module.module import SoundCard, SoundCommandType, DataType, SampleRate
 
@@ -47,6 +48,7 @@ Usage Example (using 'with' statement)
 ======================================
 
 .. code:: python
+
     import numpy as np
     from pybpod_soundcard_module.module import SoundCard, SoundCommandType
     from pybpod_soundcard_module.module_api import DataType, SampleRate
