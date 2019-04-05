@@ -222,12 +222,16 @@ class SoundCardModule(object):
         if not self._dev:
             raise Exception("Sound card might not be connected. Please connect it before any operation.")
 
-        # admit that if the output_folder is empty, write inside a 'from_soundcard' folder in the current directory
+        # admit that if the output_folder is None, write inside a 'from_soundcard' folder in the current directory
         if not output_folder:
             output_folder = os.path.join(os.getcwd(), 'from_soundcard')
             if not os.path.isdir(output_folder):
                 os.makedirs(output_folder)
         else:
+            # create folder if it doesn't exists
+            if not os.path.exists(output_folder):
+                os.makedirs(output_folder)
+
             if clean_dst_folder:
                 for file in os.listdir(output_folder):
                     file_path = os.path.join(output_folder, file)
