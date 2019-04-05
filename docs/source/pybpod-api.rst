@@ -26,7 +26,7 @@ Usage Example
     my_bpod = Bpod(serial_port='/dev/ttyACM0')
 
     # get first SoundBoard module connected to a Bpod serial port
-    sound_module = [x for x in my_bpod.modules if x.name == 'SoundBoard1'][0]
+    sound_module = [x for x in my_bpod.modules if x.name == 'SoundCard1'][0]
     sound_module_play = 1
 
     card = (SoundCard)(sound_module)
