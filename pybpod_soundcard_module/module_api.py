@@ -7,8 +7,6 @@ from enum import Enum, IntEnum
 from aenum import auto
 import os
 import collections
-import serial
-from serial.tools import list_ports
 import usb.core
 import usb.util
 
@@ -114,21 +112,19 @@ class SoundCardModule(object):
     USB connection. It also allows to send play and stop commands through the COM interface or through BPod.
     """
 
-    def __init__(self, serial_port=None, device=None):
+    def __init__(self, device=None):
         """
-        If the serial_port is given, it will try to open it automatically.
+        If a libUSB's device is given, it will try to open it. If none is given it will try to connect to the first Sound Card that is connected to the computer.
 
-        :param serial_port: (Optional) string denoting the serial port (COM) to open.
         :param device: (Optional) libUSB device to use. If nothing is passed, it will try to connect automatically.
         """
         self._dev = None
         self._devices = list(usb.core.find(idVendor=0x04d8, idProduct=0xee6a, find_all=True))
         self._cfg = None
         self._port = None
-        self._serial_port = serial_port
         self._connected = False
 
-        self.open(serial_port, device)
+        self.open(device)
 
     def __enter__(self):
         return self
@@ -136,14 +132,12 @@ class SoundCardModule(object):
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.close()
 
-    def open(self, serial_port=None, device=None):
+    def open(self, device=None):
         """
-        Opens the connection to the Sound Card. If no com_port is given, it will try to connect to the first Sound Card that is connected to the computer.
+        Opens the connection to the Sound Card. If no device is given, it will try to connect to the first Sound Card that is connected to the computer.
 
-        :param serial_port: (Optional) string denoting the serial port (COM) to open.
-        :param device: (Optional) libUSB device to use. If nothing is passed, it will try to connect automatically.
+        :param device: (Optional) Already initialized libUSB's device to use.
         """
-        self._serial_port = serial_port
         if device is None:
             self._dev = usb.core.find(idVendor=0x04d8, idProduct=0xee6a)
         else:
@@ -158,16 +152,6 @@ class SoundCardModule(object):
             self._cfg = self._dev.get_active_configuration()
             if self._cfg is None or self._cfg.bConfigurationValue != 1:
                 self._dev.set_configuration(1)
-
-        com_ports = serial.tools.list_ports.comports()
-
-        if com_ports or len(com_ports) is not 0:
-            ports = [x for x in com_ports if x.vid == 0x0403 and x.pid == 0x6001]
-            if len(ports) > 0:
-                self._port = ports[0]
-            else:
-                print(
-                    "No COM ports detected. You will not be able to send play and stop commands to the sound card using a COM port.")
 
         self._connected = True
 
@@ -184,8 +168,6 @@ class SoundCardModule(object):
         """
         Closes the connection with the Sound Card. It will close the COM connection (to send play commands) if it was open and the USB connection (to read and save sounds)
         """
-        if self._port:
-            self._port.close()
         if self._dev:
             usb.util.dispose_resources(self._dev)
 
@@ -205,7 +187,7 @@ class SoundCardModule(object):
         assert wrt == len(reset_cmd)
 
         time.sleep(700.0 / 1000.0)
-        self.open(self._serial_port)
+        self.open()
 
     def read_sounds(self, output_folder=None, sound_index=None, clean_dst_folder=True):
         """
