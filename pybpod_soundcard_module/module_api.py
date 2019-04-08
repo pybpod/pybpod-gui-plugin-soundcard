@@ -109,7 +109,7 @@ class SoundMetadata(object):
 class SoundCardModule(object):
     """
     Provides access to the Harp Sound Card. It allows to send and read the sounds in the Sound Card, through a normal
-    USB connection. It also allows to send play and stop commands through the COM interface or through BPod.
+    USB connection.
     """
 
     def __init__(self, device=None):
@@ -166,7 +166,7 @@ class SoundCardModule(object):
 
     def close(self):
         """
-        Closes the connection with the Sound Card. It will close the COM connection (to send play commands) if it was open and the USB connection (to read and save sounds)
+        Closes the connection with the Sound Card. It will close USB connection (to read and save sounds)
         """
         if self._dev:
             usb.util.dispose_resources(self._dev)

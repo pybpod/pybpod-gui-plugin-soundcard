@@ -15,6 +15,9 @@
 .. autoclass:: pybpod_soundcard_module.module_api.SoundCardModule
     :members:
 
+.. automodule:: pybpod_soundcard_module.utils.generate_sound
+    :members:
+
 Usage Example
 =============
 
@@ -23,6 +26,7 @@ Usage Example
     import numpy as np
     from pybpod_soundcard_module.module import SoundCard, SoundCommandType
     from pybpod_soundcard_module.module_api import SoundCardModule, DataType, SampleRate
+    from pybpod_soundcard_module.utils.generate_sound import generate_sound
 
     card = SoundCardModule()
     card.open()
@@ -32,6 +36,13 @@ Usage Example
 
     # load file and read data (we are using the numpy's fromfile method)
     wave_int = np.fromfile(sound_filename, dtype=np.int32)
+
+    # NOTE: As an alternative, we can generate a sound dynamically with the helper method generate_sound
+    wave_int = generate_sound(sound_filename,           # optional, if given, it will save the generated sound to the hard drive
+                              fs=96000,                 # sample rate in Hz
+                              duration=4,               # duration of the sound in seconds
+                              frequency_left=1500,      # frequency of the sinusoidal signal generated in Hz for the left channel
+                              frequency_right=1200)     # frequency of the sinusoidal signal generated in Hz for the right channel
 
     # send sound
     card.send_sound(wave_int,
@@ -55,12 +66,21 @@ Usage Example (using 'with' statement)
     import numpy as np
     from pybpod_soundcard_module.module import SoundCard, SoundCommandType
     from pybpod_soundcard_module.module_api import SoundCardModule, DataType, SampleRate
+    from pybpod_soundcard_module.utils.generate_sound import generate_sound
 
     sound_filename = 'sound.bin'
     sound_index = 4
 
     # load file and read data (we are using the numpy's fromfile method)
     wave_int = np.fromfile(sound_filename, dtype=np.int32)
+
+    # NOTE: As an alternative, we can generate a sound dynamically with the helper method generate_sound
+    wave_int = generate_sound(sound_filename,           # optional, if given, it will save the generated sound to the hard drive
+                              fs=96000,                 # sample rate in Hz
+                              duration=4,               # duration of the sound in seconds
+                              frequency_left=1500,      # frequency of the sinusoidal signal generated in Hz for the left channel
+                              frequency_right=1200)     # frequency of the sinusoidal signal generated in Hz for the right channel
+
 
     # the with statement will call 'close' automatically at the end of the block
     with SoundCardModule() as card:

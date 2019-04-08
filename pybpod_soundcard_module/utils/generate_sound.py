@@ -2,11 +2,17 @@ import math
 import numpy as np
 
 
-def generate_sound(filename,
-                   fs=96000,  # number of samples per second (standard)
-                   duration=1,  # seconds
-                   frequency_left=1000,  # of cycles per second (Hz) (frequency of the sine wave for the left channel)
-                   frequency_right=1000):  # of cycles per second (Hz) (frequency of the sine wave for the right channel)
+def generate_sound(filename=None, fs=96000, duration=1, frequency_left=1000, frequency_right=1000):
+    """
+    Helper method to dynamically generated a sound that can be used in with the Sound Card module.
+    
+    :param filename: (Optional)
+    :param fs: (Optional) number of samples per second (standard)
+    :param duration: (Optional) sound duration in seconds
+    :param frequency_left: (Optional) number of cycles per second (Hz) (frequency of the sine wave for the left channel)
+    :param frequency_right: (Optional) number of cycles per second (Hz) (frequency of the sine wave for the right channel)
+    :return: Returns the **flatten** generated sound as a numpy array (as np.int8)
+    """
 
     amplitude24bits = math.pow(2, 31) - 1
 
