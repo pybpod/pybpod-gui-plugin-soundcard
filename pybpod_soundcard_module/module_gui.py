@@ -1,6 +1,7 @@
 import os
 import tempfile
 
+import pyforms
 from pyforms_gui.controls.control_checkbox import ControlCheckBox
 from pyforms_gui.controls.control_textarea import ControlTextArea
 from scipy.io import wavfile
@@ -8,7 +9,7 @@ import numpy as np
 from AnyQt import QtGui
 from AnyQt.QtWidgets import QFileDialog, QStatusBar
 from confapp import conf
-from pybpod_soundcard_module.utils.generate_sound import generate_sound
+from pybpod_soundcard_module.utils.generate_sound import generate_sound, WindowConfiguration
 from pyforms_gui.basewidget import BaseWidget
 from pyforms_gui.controls.control_button import ControlButton
 from pyforms_gui.controls.control_combo import ControlCombo
@@ -34,7 +35,7 @@ class SoundGenerationPanel(BaseWidget):
         self._filename = ControlText('Sound filename', '', changed_event=self.__filename_changed_evt, enabled=False)
         self._saveas_btn = ControlButton('Save As...', default=self.__prompt_save_file_evt, enabled=False)
 
-        self._freq_label = ControlLabel('Frequency (Hz)', style='font-weight:bold;margin-left:0')
+        self._freq_label = ControlLabel('Frequency (Hz)', style='margin-left:0')
         self._freq_left = ControlNumber('Left channel', default=1000, minimum=0, maximum=20000)
         self._freq_right = ControlNumber('Right channel', default=1000, minimum=0, maximum=20000)
         self._duration = ControlNumber('Duration (s)', default=1, minimum=0, maximum=10000, decimals=2)
@@ -42,6 +43,29 @@ class SoundGenerationPanel(BaseWidget):
         self._sample_rate = ControlCombo('Sample rate')
         self._sample_rate.add_item('96 KHz', SampleRate._96000HZ)
         self._sample_rate.add_item('192 KHz', SampleRate._192000HZ)
+
+        self._create_window = ControlCheckBox('Create window',
+                                              default=True,
+                                              changed_event=self.__create_window_checkbox_evt)
+
+        self._left_window_duration = ControlNumber(default=100, minimum=0, maximum=20000)
+        self._right_window_duration = ControlNumber(default=100, minimum=0, maximum=20000)
+        self._left_apply_window_start = ControlCheckBox(default=True)
+        self._right_apply_window_start = ControlCheckBox(default=True)
+        self._left_apply_window_end = ControlCheckBox(default=True)
+        self._right_apply_window_end = ControlCheckBox(default=True)
+
+        self._left_window_functions = ControlCombo('Left channel window')
+        self._left_window_functions.add_item('Hanning', 'Hanning')
+        self._left_window_functions.add_item('Hamming', 'Hamming')
+        self._left_window_functions.add_item('Blackman', 'Blackman')
+        self._left_window_functions.add_item('Bartlett', 'Bartlett')
+
+        self._right_window_functions = ControlCombo('Right channel window')
+        self._right_window_functions.add_item('Hanning', 'Hanning')
+        self._right_window_functions.add_item('Hamming', 'Hamming')
+        self._right_window_functions.add_item('Blackman', 'Blackman')
+        self._right_window_functions.add_item('Bartlett', 'Bartlett')
 
         self._gen_btn = ControlButton('Generate sound',
                                       default=self.__generate_sound_and_save)
@@ -53,7 +77,14 @@ class SoundGenerationPanel(BaseWidget):
             '_save_file_checkbox',
             ('_filename', '_saveas_btn'),
             ('_duration', ' ', '_sample_rate'),
-            ('h5:Frequency', ' ', '_freq_left', '_freq_right'),
+            ('Frequency', ' ', '_freq_left', '_freq_right'),
+            '_create_window',
+            ('', 'Left channel', 'Right channel'),
+            ('Duration (ms)', '_left_window_duration', '_right_window_duration'),
+            ('Apply window to start', '_left_apply_window_start', '_right_apply_window_start'),
+            ('Apply window to end', '_left_apply_window_end', '_right_apply_window_end'),
+            '_left_window_functions',
+            '_right_window_functions',
             '_gen_btn'
         ]
 
@@ -77,6 +108,18 @@ class SoundGenerationPanel(BaseWidget):
 
     def sound_generated(self):
         pass
+
+    def __create_window_checkbox_evt(self):
+        # enable or disable the the window configuration according to the checkbox
+        status = self._create_window.value
+        self._left_window_duration.enabled = status
+        self._left_apply_window_start.enabled = status
+        self._left_apply_window_end.enabled = status
+        self._left_window_functions.enabled = status
+        self._right_window_duration.enabled = status
+        self._right_apply_window_start.enabled = status
+        self._right_apply_window_end.enabled = status
+        self._right_window_functions.enabled = status
 
     def __filename_changed_evt(self):
         if not self._filename.value:
@@ -106,12 +149,22 @@ class SoundGenerationPanel(BaseWidget):
             self.warning("Please select a destination file for the generated sound", "No sound file selected")
             return
 
+        window_config = WindowConfiguration(left_duration=int(self._left_window_duration.value) / 1000,
+                                            left_apply_window_start=self._left_apply_window_start.value,
+                                            left_apply_window_end=self._left_apply_window_end.value,
+                                            left_window_function=self._left_window_functions.value,
+                                            right_duration=int(self._right_window_duration.value) / 1000,
+                                            right_apply_window_start=self._right_apply_window_start.value,
+                                            right_apply_window_end=self._right_apply_window_end.value,
+                                            right_window_function=self._right_window_functions.value)
+
         self._wave_int = generate_sound(self._filename.value,
                                         # _sample_rate.value is an Enum so we need to get the value from it
                                         self._sample_rate.value.value,
                                         self._duration.value,
                                         int(self._freq_left.value),
-                                        int(self._freq_right.value))
+                                        int(self._freq_right.value),
+                                        window_config)
 
         self.sound_generated()
         self._generated = True
@@ -373,3 +426,7 @@ class SoundCardModuleGUI(SoundCardModule, BaseWidget):
                 os.unlink(usr_metadata_file)
             if description_file is not None:
                 os.unlink(description_file)
+
+
+if __name__ == '__main__':
+    pyforms.start_app(SoundCardModuleGUI, geometry=(0, 0, 600, 500))
