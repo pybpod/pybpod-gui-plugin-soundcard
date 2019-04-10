@@ -74,17 +74,20 @@ class SoundGenerationPanel(BaseWidget):
 
         # Define the organization of the forms
         self.formset = [
-            '_save_file_checkbox',
-            ('_filename', '_saveas_btn'),
-            ('_duration', ' ', '_sample_rate'),
-            ('Frequency', ' ', '_freq_left', '_freq_right'),
-            '_create_window',
-            ('', 'Left channel', 'Right channel'),
-            ('Duration (ms)', '_left_window_duration', '_right_window_duration'),
-            ('Apply window to start', '_left_apply_window_start', '_right_apply_window_start'),
-            ('Apply window to end', '_left_apply_window_end', '_right_apply_window_end'),
-            '_left_window_functions',
-            '_right_window_functions',
+            (
+                ['_save_file_checkbox',
+                    ('_filename', '_saveas_btn'),
+                    ['_duration', '_sample_rate'],
+                    ('h5:Frequency',  ['_freq_left', '_freq_right'])],
+                ' ',
+                ['_create_window',
+                    ('', 'Left channel', 'Right channel'),
+                    ('Duration (ms)', '_left_window_duration', '_right_window_duration'),
+                    ('Apply window to start', '_left_apply_window_start', '_right_apply_window_start'),
+                    ('Apply window to end', '_left_apply_window_end', '_right_apply_window_end'),
+                    '_left_window_functions',
+                    '_right_window_functions']
+            ),
             '_gen_btn'
         ]
 
