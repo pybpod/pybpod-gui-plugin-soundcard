@@ -46,9 +46,9 @@ generate a sound using the provided UI, or you can load it from the disk.
 Generating sounds
 -----------------
 The UI allows to create sounds with a sinewave, with distinct frequencies for
-the left and right channel. The duration of the sound can also be configured.
-The two sample rates supported by the Harp Sound Card can be selected in the
-sound generation portion of the UI.
+the left and right channel. The duration, in seconds, of the sound can also be
+configured. The two sample rates supported by the Harp Sound Card can be selected
+in the sound generation portion of the UI.
 
 .. figure:: _static/generate_sound.png
    :scale: 100 %
@@ -59,12 +59,26 @@ sound generation portion of the UI.
 
 When pressing the **Generate sound** button, the sound will be generated and
 it will be possible to send it to the Sound Card, at the bottom portion of the
-UI.
+main UI.
 
 .. note:: It is possible to generate a sound in memory and send it directly
           to the Sound Card. However, if you wish to save the generated
           sound to the disk, you can activate the checkbox **Write sound to
           file** and create a new file.
+
+At the same time, it is possible to generate the sound with a window function at
+the start and/or end of the sound. The duration of this window can be different
+for the left and right channel, and its duration is defined in milliseconds. It is
+also possible to define if the window function should be applied to the start, end
+or both sides of the sound. The window function used can also be selected. The
+available options are: Hanning, Hamming, Blackman and Bartlett.
+
+.. note:: The window functions implementation are provided by the NumPy library.
+          For further details, please visit the |numpy_location| (opens in new tab).
+
+.. |numpy_location| raw:: html
+
+   <a href='https://docs.scipy.org/doc/numpy/reference/routines.window.html' target='_blank'>Numpy's official documentation</a>
 
 
 Loading sounds from disk

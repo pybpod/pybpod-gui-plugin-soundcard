@@ -79,7 +79,7 @@ class SoundGenerationPanel(BaseWidget):
                     ('_filename', '_saveas_btn'),
                     ['_duration', '_sample_rate'],
                     ('h5:Frequency',  ['_freq_left', '_freq_right'])],
-                ' ',
+                '    ',
                 ['_create_window',
                     ('', 'Left channel', 'Right channel'),
                     ('Duration (ms)', '_left_window_duration', '_right_window_duration'),
