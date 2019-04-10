@@ -41,7 +41,7 @@ author = 'Luís Teixeira'
 # The short X.Y version
 version = 'v0.1'
 # The full version, including alpha/beta/rc tags
-release = 'v0.1.2'
+release = 'v0.1.3'
 
 
 # -- General configuration ---------------------------------------------------
@@ -232,4 +232,4 @@ intersphinx_mapping = {'https://docs.python.org/': None}
 # -- Options for todo extension ----------------------------------------------
 
 # If true, `todo` and `todoList` produce output, else they produce nothing.
-todo_include_todos = True
+todo_include_todos = False
