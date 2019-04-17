@@ -313,7 +313,11 @@ class SoundCardModuleGUI(SoundCardModule, BaseWidget):
         if self._sound_card:
             usb_devices = self._sound_card.devices
             for n, item in enumerate(usb_devices):
-                item_str = item.product + ' {n} (port={port})'.format(n=n, port=item.port_number)
+                if item.port_number:
+                    item_str = item.product + ' {n} (port={port})'.format(n=n, port=item.port_number)
+                else:
+                    item_str = item.product + ' {n}'.format(n=n)
+
                 self._usb_port.add_item(item_str, item)
 
     def _sound_generated_evt(self):
