@@ -380,7 +380,7 @@ class SoundCardModuleGUI(SoundCardModule, BaseWidget):
 
     def __connect_btn_pressed(self):
         if not self._usb_port.value:
-            self.warning("Please select a serial port before proceeding.", "No serial port selected")
+            self.warning("Please select a USB connected device before proceeding.", "No USB device selected")
             return
 
         self._sound_card = SoundCardModule(device=self._usb_port.value)
