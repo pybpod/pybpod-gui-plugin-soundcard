@@ -153,7 +153,7 @@ class SoundCardModule(object):
             if self._cfg is None or self._cfg.bConfigurationValue != 1:
                 self._dev.set_configuration(1)
 
-        self._connected = True
+        self._connected = True if self._dev else False
 
     @property
     def devices(self):
