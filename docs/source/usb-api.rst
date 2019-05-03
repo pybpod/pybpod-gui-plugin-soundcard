@@ -113,7 +113,7 @@ Usage Example (sound generation with WindowConfiguration)
     sound_index = 4
 
     # create WindowConfiguration to later pass it to generate_sound
-    # NOTE: (exemplification of options available, change options accordingly your needs)
+    # NOTE: (exemplification of options available, change options according to your needs)
     window_config = WindowConfiguration( left_duration = 0.2,                   # It is possible to define different durations for the left and right channel.
                                          left_apply_window_start = True,        # For this example, we want a start window
                                          left_apply_window_end = False,         # ... and no 'end' window for the left channel
