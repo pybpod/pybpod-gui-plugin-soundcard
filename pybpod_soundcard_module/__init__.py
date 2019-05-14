@@ -1,4 +1,4 @@
-__version__ 	= "0.1.4"
+__version__ = '0.1.4'
 __author__ 		= ['Luís Teixeira']
 __credits__ 	= ["Luís Teixeira"]
 __license__ 	= "Copyright (C) 2007 Free Software Foundation, Inc. <http://fsf.org/>"
