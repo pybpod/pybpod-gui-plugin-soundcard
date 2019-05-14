@@ -38,7 +38,7 @@ project = 'Sound Card Module'
 copyright = '2018-2019, Luís Teixeira'
 author = 'Luís Teixeira'
 
-version = release = '0.1.4'
+version = release = '0.1.5'
 
 # -- General configuration ---------------------------------------------------
 
