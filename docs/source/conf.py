@@ -39,7 +39,7 @@ copyright = '2018-2019, Luís Teixeira'
 author = 'Luís Teixeira'
 
 # The short X.Y version
-version = 'v0.1'
+version = 'v0.1.4'
 # The full version, including alpha/beta/rc tags
 release = 'v0.1.4'
 
