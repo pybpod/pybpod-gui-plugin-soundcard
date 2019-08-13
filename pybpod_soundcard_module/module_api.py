@@ -458,7 +458,7 @@ class SoundCardModule(object):
         assert res_write == len(metadata_cmd)
 
         try:
-            ret = self._dev.read(0x81, metadata_cmd_reply, 100)
+            ret = self._dev.read(0x81, metadata_cmd_reply, 1000)
         except usb.core.USBError as e:
             # TODO: we probably should try again
 
@@ -514,7 +514,7 @@ class SoundCardModule(object):
             assert res_write == len(data_cmd)
 
             try:
-                ret = self._dev.read(0x81, data_cmd_reply, 100)
+                ret = self._dev.read(0x81, data_cmd_reply, 400)
             except usb.core.USBError as e:
                 # TODO: we probably should try again
 
