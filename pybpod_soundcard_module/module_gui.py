@@ -387,6 +387,9 @@ class SoundCardModuleGUI(SoundCardModule, BaseWidget):
             self.warning("Please select a USB connected device before proceeding.", "No USB device selected")
             return
 
+        if self._sound_card is not None:
+            self._sound_card.close()
+
         self._sound_card = SoundCardModule(device=self._usb_port.value)
 
         # update visual elements

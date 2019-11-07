@@ -1,9 +1,6 @@
 *************************************
-:mod:`pybpodapi`
+:mod:`PyBpod SoundCard module API`
 *************************************
-
-.. module:: pybpodapi
-   :synopsis: top-level module
 
 .. autoclass:: pybpod_soundcard_module.module.SoundCommandType
     :members:

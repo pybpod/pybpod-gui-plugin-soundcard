@@ -9,7 +9,7 @@ import os
 import collections
 import usb.core
 import usb.util
-
+from usb.backend import libusb1 as libusb
 
 class SampleRate(IntEnum):
     """
@@ -118,13 +118,18 @@ class SoundCardModule(object):
 
         :param device: (Optional) libUSB device to use. If nothing is passed, it will try to connect automatically.
         """
-        self._dev = None
-        self._devices = list(usb.core.find(idVendor=0x04d8, idProduct=0xee6a, find_all=True))
+        self._backend = libusb.get_backend()
+        try:
+            self._devices = list(usb.core.find(backend=self._backend, idVendor=0x04d8, idProduct=0xee6a, find_all=True))
+        except OSError as e:
+            pass
+        
+        self._dev = self._devices[0] if self._devices else None
         self._cfg = None
         self._port = None
         self._connected = False
 
-        self.open(device)
+        self.open(self._dev if device is None else device)
 
     def __enter__(self):
         return self
@@ -139,7 +144,12 @@ class SoundCardModule(object):
         :param device: (Optional) Already initialized libUSB's device to use.
         """
         if device is None:
-            self._dev = usb.core.find(idVendor=0x04d8, idProduct=0xee6a)
+            self._backend = libusb.get_backend()
+            try:
+                self._dev = usb.core.find(backend=self._backend, idVendor=0x04d8, idProduct=0xee6a)
+            except OSError as e:
+                self._dev = None
+                pass
         else:
             self._dev = device
 
@@ -157,7 +167,6 @@ class SoundCardModule(object):
 
     @property
     def devices(self):
-        self._devices = list(usb.core.find(idVendor=0x04d8, idProduct=0xee6a, find_all=True))
         return self._devices
 
     @property
@@ -458,7 +467,7 @@ class SoundCardModule(object):
         assert res_write == len(metadata_cmd)
 
         try:
-            ret = self._dev.read(0x81, metadata_cmd_reply, 100)
+            ret = self._dev.read(0x81, metadata_cmd_reply, 1000)
         except usb.core.USBError as e:
             # TODO: we probably should try again
 
@@ -514,7 +523,7 @@ class SoundCardModule(object):
             assert res_write == len(data_cmd)
 
             try:
-                ret = self._dev.read(0x81, data_cmd_reply, 100)
+                ret = self._dev.read(0x81, data_cmd_reply, 400)
             except usb.core.USBError as e:
                 # TODO: we probably should try again
 
