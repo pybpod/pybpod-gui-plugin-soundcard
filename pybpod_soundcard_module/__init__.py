@@ -1,7 +1,7 @@
-__version__ = '0.1.5'
+__version__ = '0.1.6'
 __author__ 		= ['Luís Teixeira']
 __credits__ 	= ["Luís Teixeira"]
-__license__ 	= "Copyright (C) 2007 Free Software Foundation, Inc. <http://fsf.org/>"
+__license__ 	= "MIT"
 __maintainer__ 	= ['Luís Teixeira']
 __email__ 		= ['micboucinha@gmail.com']
 __status__ 		= "Development"
