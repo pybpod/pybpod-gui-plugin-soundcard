@@ -88,7 +88,7 @@ class SoundMetadata(object):
         if self._sample_rate is not SampleRate._96000HZ and self._sample_rate is not SampleRate._192000HZ:
             return SoundCardErrorCode.BAD_SAMPLE_RATE
 
-        if self._data_type is not DataType.INT32 and self._data_type is not DataType.FLOAT32:
+        if not (self._data_type is DataType.INT32 or self._data_type is DataType.FLOAT32):
             return SoundCardErrorCode.BAD_DATA_TYPE
 
         if self._sound_index == 0 and self._data_type is not DataType.FLOAT32:
@@ -213,12 +213,7 @@ class SoundCardModule(object):
         if not self._dev:
             raise Exception("Sound card might not be connected. Please connect it before any operation.")
 
-        # admit that if the output_folder is None, write inside a 'from_soundcard' folder in the current directory
-        if not output_folder:
-            output_folder = os.path.join(os.getcwd(), 'from_soundcard')
-            if not os.path.isdir(output_folder):
-                os.makedirs(output_folder)
-        else:
+        if output_folder:
             # create folder if it doesn't exists
             if not os.path.exists(output_folder):
                 os.makedirs(output_folder)
@@ -231,8 +226,14 @@ class SoundCardModule(object):
                             os.unlink(file_path)
                     except Exception as e:
                         # probably a permissions error while deleting, ignore and try the next one
-                        print("Error occurred when deleting file '{file_path}'. Ignoring error and continuing.".format(file_path=file_path))
+                        print("Error occurred when deleting file '{file_path}'. Ignoring error and continuing.".format(
+                            file_path=file_path))
                         continue
+        else:
+            # admit that if the output_folder is None, write inside a 'from_soundcard' folder in the current directory
+            output_folder = os.path.join(os.getcwd(), 'from_soundcard')
+            if not os.path.isdir(output_folder):
+                os.makedirs(output_folder)
 
         if sound_index is None:
             for i in range(2, 32):

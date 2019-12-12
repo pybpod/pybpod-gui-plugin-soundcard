@@ -22,11 +22,10 @@ class ProjectsSoundCard(object):
             {'Sound Card': self.open_soundcard_plugin, 'icon': QIcon(conf.SOUNDCARD_PLUGIN_ICON)})
 
     def open_soundcard_plugin(self):
-        if not hasattr(self, 'soundcard_plugin'):
+        if hasattr(self, 'soundcard_plugin'):
+            self.soundcard_plugin.show()
+        else:
             self.soundcard_plugin = SoundCardModuleGUI(self)
             self.soundcard_plugin.show()
             self.soundcard_plugin.resize(*conf.SOUNDCARD_PLUGIN_WINDOW_SIZE)
-        else:
-            self.soundcard_plugin.show()
-
         return self.soundcard_plugin
