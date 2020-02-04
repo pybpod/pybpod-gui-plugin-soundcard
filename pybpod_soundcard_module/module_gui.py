@@ -125,20 +125,14 @@ class SoundGenerationPanel(BaseWidget):
         self._right_window_functions.enabled = status
 
     def __filename_changed_evt(self):
-        if not self._filename.value:
-            self._gen_btn.enabled = False
-        else:
-            self._gen_btn.enabled = True
+        self._gen_btn.enabled = True if self._filename.value else False
 
     def __prompt_save_file_evt(self):
         """
         Opens a window for the user to select where to save the Harp sound file (.bin extension by default)
         """
         self._filename.value, _ = QFileDialog.getSaveFileName()
-        if self._filename.value:
-            self._gen_btn.enabled = True
-        else:
-            self._gen_btn.enabled = False
+        self._gen_btn.enabled = True if self._filename.value else False
 
     def __save_file_checkbox_evt(self):
         self._filename.enabled = self._saveas_btn.enabled = self._save_file_checkbox.value
@@ -369,18 +363,12 @@ class SoundCardModuleGUI(SoundCardModule, BaseWidget):
         self._usb_port.value = tmp
 
     def __folder_changed_evt(self):
-        if not self._dest_folder.value:
-            self._read_btn.enabled = False
-        else:
-            self._read_btn.enabled = True
+        self._read_btn.enabled = True if self._dest_folder.value else False
 
     def __prompt_browse_file_evt(self):
         self._dest_folder.value = QFileDialog.getExistingDirectory()
 
-        if self._dest_folder.value:
-            self._read_btn.enabled = True
-        else:
-            self._read_btn.enabled = False
+        self._read_btn.enabled = True if self._dest_folder.value else False
 
     def __connect_btn_pressed(self):
         if not self._usb_port.value:

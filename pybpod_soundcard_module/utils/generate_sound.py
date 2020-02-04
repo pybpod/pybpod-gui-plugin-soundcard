@@ -119,5 +119,4 @@ def generate_window(fs, wave_int, duration, apply_start, apply_end, window_funct
         win[:len_fade] = fadein
     if apply_end:
         win[-len_fade:] = fadeout
-    wave_int = wave_int * win
-    return wave_int
+    return wave_int * win
