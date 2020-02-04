@@ -149,7 +149,6 @@ class SoundCardModule(object):
                 self._dev = usb.core.find(backend=self._backend, idVendor=0x04d8, idProduct=0xee6a)
             except OSError as e:
                 self._dev = None
-                pass
         else:
             self._dev = device
 
